@@ -1,10 +1,8 @@
 package ru.practicum.shareit.item.controller;
 
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.shareit.exception.validation.BadInputParametersException;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.service.ItemService;
 
@@ -22,7 +20,7 @@ public class ItemController {
     @PostMapping()
     public ItemDto postItem(
             @RequestBody @Valid ItemDto item,
-            @RequestHeader(value = "X-Sharer-User-Id") Long userId) {
+            @RequestHeader(value = "X-Sharer-User-Id", required = false) Long userId) {
 
         return itemService.addItem(userId, item);
     }
@@ -31,7 +29,7 @@ public class ItemController {
     public ItemDto patchItem(
             @PathVariable Long itemId,
             @RequestBody @Valid ItemDto item,
-            @RequestHeader(value = "X-Sharer-User-Id") Long userId) {
+            @RequestHeader(value = "X-Sharer-User-Id", required = false) Long userId) {
 
         item.setId(itemId);
         return itemService.updateItem(item, userId);
@@ -44,13 +42,13 @@ public class ItemController {
     }
 
     @GetMapping()
-    public List<ItemDto> getAllUsersItems(@RequestHeader(value = "X-Sharer-User-Id") Long userId) {
+    public List<ItemDto> getAllUsersItems(@RequestHeader(value = "X-Sharer-User-Id", required = false) Long userId) {
         return itemService.getAllUsersItems(userId);
     }
 
     @GetMapping("/search")
     public List<ItemDto> searchForItems(
-            @RequestHeader(value = "X-Sharer-User-Id") Long userId,
+            @RequestHeader(value = "X-Sharer-User-Id", required = false) Long userId,
             @RequestParam String text) {
         return itemService.searchForItems(userId, text);
     }

@@ -51,21 +51,23 @@ public class UserServiceImpl implements  UserService{
         User updatingUser = userDao.getUser(userId).get();
 
         if (user.getName() != null) {
+
             updatingUser.setLogin(user.getName());
         }
 
-       if (user.getEmail() != null) {
+        if (user.getEmail() != null) {
 
             if (user.getEmail().equals(updatingUser.getEmail())) {
 
                 updatingUser.setEmail(user.getEmail());
+
             } else {
 
                 if (userDao.getAll().stream().anyMatch(reqUser -> user.getEmail().equals(reqUser.getEmail()))) {
                     throw new EntityAlreadyExistException("данный email-адрес уже сушествует.");
                 }
             }
-            
+
             updatingUser.setEmail(user.getEmail());
         }
 
@@ -106,7 +108,6 @@ public class UserServiceImpl implements  UserService{
 
     @Override
     public UserDto updateUser(UserDto user, Long userId) {
-
 
         User fromDb = isUpdateValid(userId, user);
 

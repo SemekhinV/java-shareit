@@ -60,9 +60,9 @@ public class ItemServiceImpl implements ItemService{
         return itemDao.getItemById(item.getId()).get();
     }
 
-    private void isSearchValid(Long userId, String text) {
+    private void isSearchValid(Long userId) {
 
-        if (userId == null || text == null) {
+        if (userId == null) {
             throw new BadInputParametersException("Переданы пустые для значения поиска.");
         }
 
@@ -78,6 +78,7 @@ public class ItemServiceImpl implements ItemService{
         }
 
         if (itemDao.getAll().stream().anyMatch(item -> id.equals(item.getId()))) {
+
             return ItemMapper.toItemDto(itemDao.getItemById(id).get());
         } else {
             throw new EntityExistException("Ошибка поиска вещи, " +
@@ -140,13 +141,22 @@ public class ItemServiceImpl implements ItemService{
     @Override
     public List<ItemDto> searchForItems(Long userId, String text) {
 
-        isSearchValid(userId, text);
+        if (text.isBlank()) {return List.of();}
+
+        isSearchValid(userId);
 
         return itemDao
                 .getAll()
                 .stream()
                 .filter(Item::getAvailable)
-                .filter(item -> item.getDescription().toLowerCase().contains(text.toLowerCase()))
+                .filter(item ->
+                        item.getDescription()
+                                .toLowerCase()
+                                .contains(
+                                        text
+                                        .toLowerCase()
+                                        .strip())
+                )
                 .map(ItemMapper::toItemDto)
                 .collect(Collectors.toList());
     }
