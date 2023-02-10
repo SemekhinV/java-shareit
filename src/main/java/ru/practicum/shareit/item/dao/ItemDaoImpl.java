@@ -5,6 +5,8 @@ import org.springframework.stereotype.Repository;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.model.Item;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
@@ -12,50 +14,28 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class ItemDaoImpl implements ItemDao {
 
-    private final List<Item> itemList;
+    private final HashMap<Long, Item> itemHashMap;
 
     @Override
     public List<Item> getAll() {
-        return itemList;
+        return new ArrayList<>(itemHashMap.values());
     }
 
     @Override
     public Optional<Item> getItemById(Long id) {
-        return Optional.of(itemList.get(Math.toIntExact(id)));
+        return Optional.of(itemHashMap.get(id));
     }
 
     @Override
-    public Item addItem(ItemDto item, Long userId) {
+    public Item addItem(Item item) {
 
-        Item newItem = Item.builder()
-                .id((long) itemList.size() + 1)
-                .name(item.getName())
-                .description(item.getDescription())
-                .owner(Math.toIntExact(userId))
-                .available(item.isAvailable())
-                .build();
+        itemHashMap.put(item.getId(), item);
 
-        itemList.add(newItem);
-
-        return newItem;
+        return item;
     }
 
     @Override
     public Item removeItem(Long id) {
-        return itemList.remove(Math.toIntExact(id));
-    }
-
-    @Override
-    public Item updateItem(ItemDto item) {
-
-        return itemList.set(Math.toIntExact(item.getId()),
-                itemList.get(Math.toIntExact(item.getId()))
-                        .toBuilder()
-                        .name(item.getName())
-                        .description(item.getDescription())
-                        .available(item.isAvailable())
-                        .build()
-        );
-
+        return itemHashMap.remove(id);
     }
 }

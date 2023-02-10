@@ -3,6 +3,7 @@ package ru.practicum.shareit.user.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exception.validation.EntityExistException;
+import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.dao.UserDao;
 import ru.practicum.shareit.user.mapper.UserMapperImpl;
@@ -26,12 +27,14 @@ public class UserServiceImpl implements  UserService{
     }
 
     @Override
-    public User addUser(User user) {
-        return null;
+    public User addUser(UserDto user) {
+
+
+
     }
 
     @Override
-    public User updateUser(User user) {
+    public User updateUser(UserDto user) {
         return null;
     }
 

@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 import ru.practicum.shareit.exception.validation.EntityExistException;
+import ru.practicum.shareit.exception.validation.InvalidValueException;
 import ru.practicum.shareit.item.dao.ItemDao;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.mapper.ItemMapper;
@@ -19,8 +20,13 @@ public class ItemServiceImpl implements ItemService{
 
     private final ItemDao itemDao;
 
-    private void isValid(Long id) {
+    private void isValid(Long userId, ItemDto item) {
 
+        userService.getUser(userId);
+
+        if (!userId.equals(itemDao.getItemById(item.getId()).get().getOwner())) {
+            throw new InvalidValueException("Идентификатор владельца вещи не совпадает с переданным значением.");
+        }
     }
 
     @Override
@@ -39,19 +45,39 @@ public class ItemServiceImpl implements ItemService{
     @Override
     public ItemDto addItem(Long userId, ItemDto item) {
 
-        //userService.getUser(userId);            //Обращаемся к юзер сервису чтобы проверить существование пользователя
+        userService.getUser(userId);
 
-        return ItemMapper.toItemDto(
-                itemDao.addItem(item, userId)
+        return ItemMapper.toItemDto(itemDao.addItem(
+                Item.builder()
+                        .id((long) itemDao.getAll().size() + 1)
+                        .name(item.getName())
+                        .description(item.getDescription())
+                        .owner(userId)
+                        .available(item.getAvailable())
+                        .build()
+                )
         );
-
     }
 
     @Override
-    public ItemDto updateItem(ItemDto item) {
+    public ItemDto updateItem(ItemDto item, Long userId) {
+
+        isValid(userId, item);
+
+        Item updatedItem = itemDao.getItemById(item.getId()).orElseThrow(
+                () -> {throw new EntityExistException("item not found");}
+        );
+
+        if (item.getName() != null) {
+            updatedItem.setName(item.getName());
+        } if (item.getDescription() != null) {
+            updatedItem.setDescription(item.getDescription());
+        } if (item.getAvailable() != null) {
+            updatedItem.setAvailable(item.getAvailable());
+        }
 
         return ItemMapper.toItemDto(
-                itemDao.updateItem(item)
+                itemDao.addItem(updatedItem)
         );
     }
 }

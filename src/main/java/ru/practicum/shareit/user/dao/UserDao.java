@@ -8,6 +8,7 @@ public interface UserDao {
 
     Optional<User> getUser(Long id);
 
+    User addUser(User user);
 
-
+    User deleteUser(Long id);
 }

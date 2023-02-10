@@ -8,5 +8,5 @@ public interface ItemService {
 
     ItemDto addItem(Long userId, ItemDto item);
 
-    ItemDto updateItem(ItemDto item);
+    ItemDto updateItem(ItemDto item, Long userId);
 }

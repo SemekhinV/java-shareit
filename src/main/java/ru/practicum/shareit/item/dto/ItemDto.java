@@ -5,6 +5,7 @@ import lombok.experimental.FieldDefaults;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Positive;
+import java.util.BitSet;
 
 @Data
 @Builder(toBuilder = true)
@@ -15,11 +16,9 @@ public class ItemDto {
     @Positive(message = "Значение id не может быть отрицательным.")
     Long id;
 
-    @NotBlank(message = "Имя вещи не может быть пустым.")
     String name;
 
-    @NotBlank(message = "Описание вещи не может быть пустым.")
     String description;
 
-    boolean available;
+    Boolean available;
 }

@@ -1,10 +1,7 @@
 package ru.practicum.shareit.item.model;
 
 
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
 import ru.practicum.shareit.request.ItemRequest;
 
@@ -13,6 +10,7 @@ import javax.validation.constraints.Positive;
 
 @Data
 @Builder(toBuilder = true)
+@NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class Item {
@@ -27,9 +25,9 @@ public class Item {
     String description;
 
     @Positive
-    int owner;
+    Long owner;
 
-    boolean available;
+    Boolean available;
 
     ItemRequest request;
 }

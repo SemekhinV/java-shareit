@@ -12,9 +12,7 @@ public interface ItemDao {
 
     Optional<Item> getItemById(Long id);
 
-    Item addItem(ItemDto item, Long userId);
+    Item addItem(Item item);
 
     Item removeItem(Long id);
-
-    Item updateItem(ItemDto item);
 }

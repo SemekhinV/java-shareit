@@ -11,7 +11,7 @@ public class ItemMapper {
                 .id(item.getId())
                 .description(item.getDescription())
                 .name(item.getName())
-                .available(item.isAvailable())
+                .available(item.getAvailable())
                 .build();
     }
 }
