@@ -2,44 +2,59 @@ package ru.practicum.shareit.user.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import ru.practicum.shareit.exception.validation.EntityAlreadyExistException;
 import ru.practicum.shareit.exception.validation.EntityExistException;
-import ru.practicum.shareit.user.dto.UserDto;
-import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.dao.UserDao;
-import ru.practicum.shareit.user.mapper.UserMapperImpl;
+import ru.practicum.shareit.user.dto.UserDto;
+import ru.practicum.shareit.user.mapper.UserMapper;
+import ru.practicum.shareit.user.model.User;
 
 
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements  UserService{
 
-    private final UserMapperImpl userMapper;
+    private final UserMapper userMapper;
 
     private final UserDao userDao;
 
-    public User getUser(Long id) {
+    private User isValid(UserDto user) {
 
-        //isIdValid(id, -101);
+        if (userDao.getAll()
+                .stream()
+                .anyMatch(usr -> usr.getEmail().equals(user.getUserEmail()))
+        ) {
+            throw new EntityAlreadyExistException("Выбраный email уже кем-то занят.");
+        }
 
-        return userDao.getUser(id).orElseThrow(
-                () -> {throw new EntityExistException("Ошибка поиска юзера, запись с id = " + id + " не найдена.");}
+        return UserMapper.fromDtoToUser(user);
+    }
+
+    public UserDto getUser(Long id) {
+
+        return UserMapper.toUserDto(
+                userDao.getUser(id).orElseThrow(
+                        () -> {throw new EntityExistException("Ошибка поиска юзера, " +
+                                "запись с id = " + id + " не найдена.");
+                        })
         );
     }
 
     @Override
-    public User addUser(UserDto user) {
+    public UserDto addUser(UserDto user) {
 
+        User validUser = isValid(user);
 
-
+        return UserMapper.toUserDto(userDao.addUser(validUser));
     }
 
     @Override
-    public User updateUser(UserDto user) {
+    public UserDto updateUser(UserDto user, Long userId) {
         return null;
     }
 
     @Override
-    public User deleteUser(Long id) {
+    public UserDto deleteUser(Long id) {
         return null;
     }
 }

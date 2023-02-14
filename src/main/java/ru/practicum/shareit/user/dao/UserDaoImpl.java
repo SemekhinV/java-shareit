@@ -4,7 +4,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import ru.practicum.shareit.user.model.User;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -31,5 +33,11 @@ public class UserDaoImpl implements UserDao {
     public User deleteUser(Long id) {
 
         return userHashMap.remove(id);
+    }
+
+    @Override
+    public List<User> getAll() {
+
+        return new ArrayList<>(userHashMap.values());
     }
 }

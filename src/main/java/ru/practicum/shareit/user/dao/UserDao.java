@@ -2,6 +2,7 @@ package ru.practicum.shareit.user.dao;
 
 import ru.practicum.shareit.user.model.User;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface UserDao {
@@ -11,4 +12,6 @@ public interface UserDao {
     User addUser(User user);
 
     User deleteUser(Long id);
+
+    List<User> getAll();
 }

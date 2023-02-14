@@ -6,7 +6,7 @@ import org.springframework.validation.annotation.Validated;
 import ru.practicum.shareit.exception.validation.EntityExistException;
 import ru.practicum.shareit.exception.validation.InvalidValueException;
 import ru.practicum.shareit.item.dao.ItemDao;
-import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.item.dto.UserDto;
 import ru.practicum.shareit.item.mapper.ItemMapper;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.service.UserService;
@@ -20,7 +20,7 @@ public class ItemServiceImpl implements ItemService{
 
     private final ItemDao itemDao;
 
-    private void isValid(Long userId, ItemDto item) {
+    private void isValid(Long userId, UserDto item) {
 
         userService.getUser(userId);
 
@@ -30,7 +30,7 @@ public class ItemServiceImpl implements ItemService{
     }
 
     @Override
-    public ItemDto getItem(Long id) {
+    public UserDto getItem(Long id) {
 
         return ItemMapper.toItemDto(
 
@@ -43,7 +43,7 @@ public class ItemServiceImpl implements ItemService{
     }
 
     @Override
-    public ItemDto addItem(Long userId, ItemDto item) {
+    public UserDto addItem(Long userId, UserDto item) {
 
         userService.getUser(userId);
 
@@ -60,7 +60,7 @@ public class ItemServiceImpl implements ItemService{
     }
 
     @Override
-    public ItemDto updateItem(ItemDto item, Long userId) {
+    public UserDto updateItem(UserDto item, Long userId) {
 
         isValid(userId, item);
 

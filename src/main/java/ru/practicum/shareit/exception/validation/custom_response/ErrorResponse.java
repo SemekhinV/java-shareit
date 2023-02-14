@@ -1,4 +1,4 @@
-package ru.practicum.shareit.exception.validation;
+package ru.practicum.shareit.exception.validation.custom_response;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
