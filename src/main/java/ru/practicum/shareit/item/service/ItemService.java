@@ -1,12 +1,12 @@
 package ru.practicum.shareit.item.service;
 
-import ru.practicum.shareit.item.dto.UserDto;
+import ru.practicum.shareit.item.dto.ItemDto;
 
 public interface ItemService {
 
-    UserDto getItem(Long id);
+    ItemDto getItem(Long id);
 
-    UserDto addItem(Long userId, UserDto item);
+    ItemDto addItem(Long userId, ItemDto item);
 
-    UserDto updateItem(UserDto item, Long userId);
+    ItemDto updateItem(ItemDto item, Long userId);
 }

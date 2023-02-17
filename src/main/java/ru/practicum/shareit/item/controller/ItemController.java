@@ -4,7 +4,7 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.shareit.item.dto.UserDto;
+import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.service.ItemService;
 
 import javax.validation.Valid;
@@ -18,17 +18,17 @@ public class ItemController {
     private final ItemService itemService;
 
     @PostMapping()
-    public UserDto postItem(
-            @RequestBody @Valid UserDto item,
+    public ItemDto postItem(
+            @RequestBody @Valid ItemDto item,
             @RequestHeader(value = "X-Sharer-User-Id") Long userId) {
 
         return itemService.addItem(userId, item);
     }
 
     @PatchMapping("/{itemId}")
-    public UserDto patchItem(
+    public ItemDto patchItem(
             @PathVariable @NonNull Long itemId,
-            @RequestBody @Valid UserDto item,
+            @RequestBody @Valid ItemDto item,
             @RequestHeader(value = "X-Sharer-User-Id") @NonNull Long userId) {
 
         item.setId(itemId);
@@ -36,7 +36,7 @@ public class ItemController {
     }
 
     @GetMapping("/{itemId}")
-    public UserDto getItem(@PathVariable Long itemId) {
+    public ItemDto getItem(@PathVariable Long itemId) {
 
         return itemService.getItem(itemId);
     }

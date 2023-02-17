@@ -4,7 +4,6 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import javax.validation.constraints.Email;
-import javax.validation.constraints.NotBlank;
 
 @Data
 @Builder(toBuilder = true)
@@ -12,12 +11,9 @@ import javax.validation.constraints.NotBlank;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class UserDto {
 
-    @NonNull
-    Long userId;
+    Long id;
 
-    @NotBlank(message = "Необходимо указать login пользователя.")
-    String userLogin;
-
-    @Email(message = "Необходимо указать email пользователя.")
-    String userEmail;
+    String name;
+    @Email(regexp = "^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$")
+    String email;
 }
