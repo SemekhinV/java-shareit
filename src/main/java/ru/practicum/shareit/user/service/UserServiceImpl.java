@@ -65,9 +65,9 @@ public class UserServiceImpl implements  UserService{
                     throw new EntityAlreadyExistException("данный email-адрес уже сушествует.");
                 }
             }
+            
+            updatingUser.setEmail(user.getEmail());
         }
-
-        updatingUser.setEmail(user.getEmail());
 
         return updatingUser;
     }
