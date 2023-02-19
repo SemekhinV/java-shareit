@@ -2,6 +2,7 @@ package ru.practicum.shareit.user.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import ru.practicum.shareit.exception.validation.BadInputParametersException;
 import ru.practicum.shareit.exception.validation.EntityAlreadyExistException;
 import ru.practicum.shareit.exception.validation.EntityExistException;
 import ru.practicum.shareit.exception.validation.InvalidValueException;
@@ -11,6 +12,8 @@ import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.model.User;
 
 import javax.validation.Valid;
+import java.util.List;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -19,41 +22,77 @@ public class UserServiceImpl implements  UserService{
 
     private final UserDao userDao;
 
-    private User isValid(UserDto user) {
+    private User isAddValid(UserDto user) {
 
-        if (user.getEmail() == null
-                || !user.getEmail().matches("^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$")
-        ) {
-            throw new InvalidValueException("Ошибка создания пользователя, неверно введен email.");
+        if (user.getEmail() == null || user.getName() == null) {
+            throw new InvalidValueException("Ошибка создания пользователя, некоторые данные не указаны.");
         }
 
-        if (userDao.getAll()
-                .stream()
-                .anyMatch(usr -> usr.getEmail().equals(user.getEmail()))
-        ) {
-            throw new EntityAlreadyExistException("Выбранный email уже занят.");
+        if (!user.getEmail().matches("^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$")) {
+            throw new InvalidValueException("Неверно указан email-адрес.");
+        }
+
+        if (userDao.getAll().stream().anyMatch(reqUser -> user.getEmail().equals(reqUser.getEmail()))) {
+            throw new EntityAlreadyExistException("данный email-адрес уже сушествует.");
         }
 
         return UserMapper.fromDtoToUser(user);
     }
 
-    public UserDto getUser(Long id) {
+    private User isUpdateValid(Long userId, UserDto user) {
 
-        return UserMapper.toUserDto(
-                userDao.getUser(id).orElseThrow(
-                        () -> {
-                            throw new EntityExistException("Ошибка поиска юзера, " +
-                                    "запись с id = " + id + " не найдена.");
-                        })
-        );
+        if (userId == null) {
+            throw new BadInputParametersException("Указан неверный id пользователя.");
+        }
+
+        if (userDao.getAll().stream().noneMatch(updatedUser -> userId.equals(updatedUser.getId()))) {
+            throw new EntityExistException("Ошибка поиска пользователя, " + "запись с id = " + userId + " не найдена.");
+        }
+
+        User updatingUser = userDao.getUser(userId).get();
+
+        if (user.getEmail() != null) {
+
+            if (userDao.getAll().stream().anyMatch(reqUser -> user.getEmail().equals(reqUser.getEmail()))) {
+                throw new EntityAlreadyExistException("данный email-адрес уже сушествует.");
+            }
+
+            updatingUser.setEmail(user.getEmail());
+        } if (user.getName() != null) {
+            updatingUser.setLogin(user.getName());
+        }
+
+        return updatingUser;
     }
 
     @Override
-    public UserDto addUser(@Valid UserDto user) {
+    public List<UserDto> getAll() {
 
-        User validUser = isValid(user);
+        return userDao
+                .getAll()
+                .stream()
+                .map(UserMapper::toUserDto)
+                .collect(Collectors.toList());
+    }
 
-        validUser.setId((long) (userDao.getAll().size() + 1));
+    public UserDto getUser(Long id) {
+
+        if (id == null) {
+            throw new BadInputParametersException("Указан неверный id пользователя.");
+        }
+
+        if (userDao.getAll().stream().anyMatch(user -> id.equals(user.getId()))) {
+            return UserMapper.toUserDto(userDao.getUser(id).get());
+        } else {
+            throw new EntityExistException("Ошибка поиска пользователя, " +
+                    "запись с id = " + id + " не найдена.");
+        }
+    }
+
+    @Override
+    public UserDto addUser(UserDto user) {
+
+        User validUser = isAddValid(user);
 
         return UserMapper.toUserDto(userDao.addUser(validUser));
     }
@@ -61,35 +100,21 @@ public class UserServiceImpl implements  UserService{
     @Override
     public UserDto updateUser(UserDto user, Long userId) {
 
-        if (userDao.getAll().stream().anyMatch(compUser ->
-            compUser.getEmail().equals(user.getEmail()))) {
-            throw new EntityExistException("Ошибка обновления пользователя, введенный email уже занят.");
-        }
 
-        User updatingUser = userDao.getUser(userId).orElseThrow(
-                () -> {
-                    throw new EntityExistException("Ошибка обновления данных пользователя, указанный индекс не найден.");
-                }
-        );
+        User fromDb = isUpdateValid(userId, user);
 
-        if (user.getEmail() != null) {
-            updatingUser.setEmail(user.getEmail());
-        } if (user.getName() != null) {
-            updatingUser.setLogin(user.getName());
-        }
-
-        return UserMapper.toUserDto(userDao.addUser(updatingUser));
+        return UserMapper.toUserDto(userDao.updateUser(fromDb));
     }
 
     @Override
-    public UserDto deleteUser(Long id) {
+    public void deleteUser(Long id) {
 
-        userDao.getUser(id).orElseThrow(
-                () -> {
-                    throw new EntityExistException("Ошибка удаления пользователя, указанный id не найден");
-                }
-        );
+        if (userDao.getAll().stream().anyMatch(user -> id.equals(user.getId()))) {
+            userDao.deleteUser(id);
+        } else {
+            throw new EntityExistException("Ошибка поиска пользователя, " +
+                    "запись с id = " + id + " не найдена.");
+        }
 
-        return UserMapper.toUserDto(userDao.deleteUser(id));
     }
 }

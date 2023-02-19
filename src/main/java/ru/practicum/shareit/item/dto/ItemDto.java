@@ -11,7 +11,6 @@ import javax.validation.constraints.Positive;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ItemDto {
 
-    @Positive(message = "Значение id не может быть отрицательным.")
     Long id;
 
     String name;

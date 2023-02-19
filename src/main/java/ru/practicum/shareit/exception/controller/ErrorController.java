@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import ru.practicum.shareit.exception.validation.BadInputParametersException;
 import ru.practicum.shareit.exception.validation.EntityExistException;
 import ru.practicum.shareit.exception.validation.InvalidValueException;
 import ru.practicum.shareit.exception.validation.custom_response.ErrorResponse;
@@ -59,6 +60,13 @@ public class ErrorController {
     public ErrorResponse recordAlreadyExist(final EntityAlreadyExistException e) {
         log.error("Конфликт при записи данных в хранилище: ".concat(e.getMessage()));
         return new ErrorResponse("Конфликт при добавлении записи: ".concat(e.getMessage()));
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ErrorResponse badInputParameters(final BadInputParametersException e) {
+        log.error("При получении запроса были приняты некорректные входные параметры ".concat(e.getMessage()));
+        return new ErrorResponse("Ошибка значений во входных параметрах запроса ".concat(e.getMessage()));
     }
 
 }

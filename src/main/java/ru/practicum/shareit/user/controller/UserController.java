@@ -5,6 +5,8 @@ import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.service.UserService;
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping(path = "/users")
@@ -31,5 +33,16 @@ public class UserController {
     public UserDto getUser(@PathVariable Long userId) {
 
         return userService.getUser(userId);
+    }
+
+    @DeleteMapping("/{userId}")
+    public void deleteUser(@PathVariable Long userId) {
+        userService.deleteUser(userId);
+    }
+
+    @GetMapping()
+    public List<UserDto> getAll() {
+
+        return userService.getAll();
     }
 }

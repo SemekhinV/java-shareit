@@ -4,16 +4,15 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import ru.practicum.shareit.user.model.User;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Repository
 @RequiredArgsConstructor
 public class UserDaoImpl implements UserDao {
 
     private final HashMap<Long, User> userHashMap;
+
+    private Long globalId = 0L;
 
     @Override
     public Optional<User> getUser(Long id) {
@@ -24,15 +23,26 @@ public class UserDaoImpl implements UserDao {
     @Override
     public User addUser(User user) {
 
+        globalId++;
+
+        user.setId(globalId);
+
+        userHashMap.put(globalId, user);
+
+        return user;
+    }
+
+    @Override
+    public User updateUser(User user) {
+
         userHashMap.put(user.getId(), user);
 
         return user;
     }
 
     @Override
-    public User deleteUser(Long id) {
-
-        return userHashMap.remove(id);
+    public void deleteUser(Long id) {
+        userHashMap.remove(id);
     }
 
     @Override
@@ -40,4 +50,5 @@ public class UserDaoImpl implements UserDao {
 
         return new ArrayList<>(userHashMap.values());
     }
+
 }
