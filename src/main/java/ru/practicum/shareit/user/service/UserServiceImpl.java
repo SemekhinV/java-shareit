@@ -50,17 +50,22 @@ public class UserServiceImpl implements  UserService{
 
         User updatingUser = userDao.getUser(userId).get();
 
-        if (user.getEmail() != null) {
-
-            if (userDao.getAll().stream().noneMatch(reqUser -> user.getEmail().equals(reqUser.getEmail()))) {
-                updatingUser.setEmail(user.getEmail());
-            } else {
-                throw new EntityAlreadyExistException("данный email-адрес уже сушествует.");
-            }
-
-        } if (user.getName() != null) {
+        if (user.getName() != null) {
             updatingUser.setLogin(user.getName());
         }
+
+        if (user.getEmail() != null) {
+
+            if (user.getEmail().equals(updatingUser.getEmail())) {
+                return updatingUser;
+            }
+
+            if (userDao.getAll().stream().anyMatch(reqUser -> user.getEmail().equals(reqUser.getEmail()))) {
+                throw new EntityAlreadyExistException("данный email-адрес уже сушествует.");
+            }
+        }
+
+        updatingUser.setEmail(user.getEmail());
 
         return updatingUser;
     }
