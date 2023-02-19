@@ -11,7 +11,6 @@ import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.model.User;
 
-import javax.validation.Valid;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -53,11 +52,12 @@ public class UserServiceImpl implements  UserService{
 
         if (user.getEmail() != null) {
 
-            if (userDao.getAll().stream().anyMatch(reqUser -> user.getEmail().equals(reqUser.getEmail()))) {
+            if (userDao.getAll().stream().noneMatch(reqUser -> user.getEmail().equals(reqUser.getEmail()))) {
+                updatingUser.setEmail(user.getEmail());
+            } else {
                 throw new EntityAlreadyExistException("данный email-адрес уже сушествует.");
             }
 
-            updatingUser.setEmail(user.getEmail());
         } if (user.getName() != null) {
             updatingUser.setLogin(user.getName());
         }
