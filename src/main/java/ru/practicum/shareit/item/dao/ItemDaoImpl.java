@@ -39,6 +39,14 @@ public class ItemDaoImpl implements ItemDao {
     }
 
     @Override
+    public Item updateItem(Item item) {
+
+        itemHashMap.put(item.getId(), item);
+
+        return item;
+    }
+
+    @Override
     public Item removeItem(Long id) {
         return itemHashMap.remove(id);
     }

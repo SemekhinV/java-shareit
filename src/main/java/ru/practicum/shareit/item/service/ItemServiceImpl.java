@@ -133,7 +133,7 @@ public class ItemServiceImpl implements ItemService{
         }
 
         return ItemMapper.toItemDto(
-                itemDao.addItem(reqItem)
+                itemDao.updateItem(reqItem)
         );
     }
 
