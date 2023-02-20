@@ -15,9 +15,9 @@ public class UserDaoImpl implements UserDao {
     private Long globalId = 0L;
 
     @Override
-    public Optional<User> getUser(Long id) {
+    public User getUser(Long id) {
 
-        return Optional.of(userHashMap.get(id));
+        return userHashMap.get(id);
     }
 
     @Override

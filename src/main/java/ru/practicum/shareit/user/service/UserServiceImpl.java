@@ -48,7 +48,7 @@ public class UserServiceImpl implements  UserService{
             throw new EntityExistException("Ошибка поиска пользователя, " + "запись с id = " + userId + " не найдена.");
         }
 
-        User updatingUser = userDao.getUser(userId).get();
+        User updatingUser = userDao.getUser(userId);
 
         if (user.getName() != null) {
 
@@ -91,7 +91,7 @@ public class UserServiceImpl implements  UserService{
         }
 
         if (userDao.getAll().stream().anyMatch(user -> id.equals(user.getId()))) {
-            return UserMapper.toUserDto(userDao.getUser(id).get());
+            return UserMapper.toUserDto(userDao.getUser(id));
         } else {
             throw new EntityExistException("Ошибка поиска пользователя, " +
                     "запись с id = " + id + " не найдена.");

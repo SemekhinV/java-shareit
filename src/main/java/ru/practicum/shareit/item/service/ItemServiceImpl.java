@@ -53,11 +53,11 @@ public class ItemServiceImpl implements ItemService{
                     "запись с id = " + item.getId() + " не найдена.");
         }
                 
-        if (!userId.equals(itemDao.getItemById(item.getId()).get().getOwner())) {
+        if (!userId.equals(itemDao.getItemById(item.getId()).getOwner())) {
             throw new EntityExistException("Ошибка обновления вещи, указан другой владелец.");
         }
 
-        return itemDao.getItemById(item.getId()).get();
+        return itemDao.getItemById(item.getId());
     }
 
     private void isSearchValid(Long userId) {
@@ -69,7 +69,6 @@ public class ItemServiceImpl implements ItemService{
         userService.getUser(userId);
     }
 
-
     @Override
     public ItemDto getItem(Long id) {
 
@@ -79,7 +78,7 @@ public class ItemServiceImpl implements ItemService{
 
         if (itemDao.getAll().stream().anyMatch(item -> id.equals(item.getId()))) {
 
-            return ItemMapper.toItemDto(itemDao.getItemById(id).get());
+            return ItemMapper.toItemDto(itemDao.getItemById(id));
         } else {
             throw new EntityExistException("Ошибка поиска вещи, " +
                     "запись с id = " + id + " не найдена.");
@@ -160,5 +159,4 @@ public class ItemServiceImpl implements ItemService{
                 .map(ItemMapper::toItemDto)
                 .collect(Collectors.toList());
     }
-
 }

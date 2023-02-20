@@ -7,7 +7,6 @@ import ru.practicum.shareit.item.model.Item;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
@@ -15,20 +14,26 @@ public class ItemDaoImpl implements ItemDao {
 
     private final HashMap<Long, Item> itemHashMap;
 
+    private Long globalId = 0L;
+
     @Override
     public List<Item> getAll() {
         return new ArrayList<>(itemHashMap.values());
     }
 
     @Override
-    public Optional<Item> getItemById(Long id) {
-        return Optional.of(itemHashMap.get(id));
+    public Item getItemById(Long id) {
+        return itemHashMap.get(id);
     }
 
     @Override
     public Item addItem(Item item) {
 
-        itemHashMap.put(item.getId(), item);
+        globalId++;
+
+        item.setId(globalId);
+
+        itemHashMap.put(globalId, item);
 
         return item;
     }
