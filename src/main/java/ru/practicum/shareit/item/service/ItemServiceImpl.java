@@ -9,11 +9,13 @@ import ru.practicum.shareit.exception.validation.EntityNotFoundException;
 import ru.practicum.shareit.exception.validation.InvalidValueException;
 import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDtoWithBookingAndComment;
+import ru.practicum.shareit.item.mapper.CommentMapper;
 import ru.practicum.shareit.item.repository.CommentRepository;
 import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.mapper.ItemMapper;
 import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.service.UserService;
 
@@ -21,10 +23,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
-
-import static ru.practicum.shareit.user.mapper.UserMapper.*;
-import static ru.practicum.shareit.item.mapper.ItemMapper.*;
-
 
 @Slf4j
 @Service
@@ -54,22 +52,6 @@ public class ItemServiceImpl implements ItemService{
             throw new BadInputParametersException("Id пользователя не указан.");
         }
     }
-    
-    private Item isUpdateValid(Long userId, ItemDto item) {
-
-        if (userId == null || item.getId() == null) {
-            throw new BadInputParametersException("Id пользователя не указан.");
-        }
-
-        if (itemRepository.findAll().stream().noneMatch(fromDb -> item.getId().equals(fromDb.getId()))) {
-            throw new EntityNotFoundException("Ошибка поиска вещи, " +
-                    "запись с id = " + item.getId() + " не найдена.");
-        }
-
-        itemRepository.getReferenceById(item.getId());
-        throw new EntityNotFoundException("Ошибка обновления вещи, указан другой владелец.");
-
-    }
 
     private void isSearchValid(Long userId) {
 
@@ -86,33 +68,54 @@ public class ItemServiceImpl implements ItemService{
 
         if (id == null) {throw new BadInputParametersException("Указан неверный id вещи.");}
 
-        if (itemRepository.findAll().stream().anyMatch(item -> id.equals(item.getId()))) {
+        Item item = itemRepository.findById(id).orElseThrow(
+                () -> {throw new EntityNotFoundException("Вещь с указанным id не найдена.");}
+        );
 
-            return mapToItemDtoWithBookingAndComment(itemRepository.getReferenceById(id));
-        } else {
-            throw new EntityNotFoundException("Ошибка поиска вещи, " +
-                    "запись с id = " + id + " не найдена.");
-        }
+
     }
 
     @Override
     @Transactional
-    public ItemDto addItem(Long userId, ItemDto item) {
+    public ItemDto addItem(Long userId, ItemDto itemDto) {
 
-        isAddValid(userId, item);
+        isAddValid(userId, itemDto);
 
-        User user = toUser(userService.getUser(userId));
+        User user = UserMapper.toUser(userService.getUser(userId));
 
-        return ItemMapper.toItemDto(itemRepository.save(
-                new Item(
-                        (userId + 1),
-                        (item.getName()),
-                        (item.getDescription()),
-                        (userId),
-                        (item.getAvailable()),
-                        0L)
-                )
+        Item item = ItemMapper.toItem(itemDto);
+
+        item.setOwner(user);
+
+        Item fromDb = itemRepository.save(item);
+
+        return ItemMapper.toItemDto(fromDb);
+    }
+
+    @Override
+    public ItemDto updateItem(ItemDto itemDto, Long userId) {
+
+        if (userId == null) {throw new BadInputParametersException("Передано пустое значение id пользователя.");}
+
+        Item item = itemRepository.findById(itemDto.getId()).orElseThrow(
+                () -> {throw new EntityNotFoundException("Вещь с указанным id не найдена.");}
         );
+
+        if (!item.getOwner().getId().equals(userId)) {
+            throw new InvalidValueException("Указанный пользователь не является хозяином.");
+        }
+
+        if (itemDto.getName() != null) {
+            item.setName(item.getName());
+        } if (itemDto.getDescription() != null) {
+            item.setDescription(item.getDescription());
+        } if (itemDto.getAvailable() != null) {
+            item.setAvailable(item.getAvailable());
+        }
+
+        Item fromDb = itemRepository.save(item);
+
+        return ItemMapper.toItemDto(fromDb);
     }
 
     @Override
@@ -130,24 +133,6 @@ public class ItemServiceImpl implements ItemService{
                 .filter(item -> Objects.equals(item.getOwner(), userId))
                 .map(ItemMapper::toItemDto)
                 .collect(Collectors.toList());
-    }
-
-    @Override
-    public ItemDto updateItem(ItemDto item, Long userId) {
-
-        Item reqItem = isUpdateValid(userId, item);
-
-        if (item.getName() != null) {
-            reqItem.setName(item.getName());
-        } if (item.getDescription() != null) {
-            reqItem.setDescription(item.getDescription());
-        } if (item.getAvailable() != null) {
-            reqItem.setAvailable(item.getAvailable());
-        }
-
-        return ItemMapper.toItemDto(
-                itemRepository.save(reqItem)
-        );
     }
 
     @Override
@@ -177,5 +162,21 @@ public class ItemServiceImpl implements ItemService{
     public CommentDto addComment(CommentDto commentDto, Long itemId, Long userId) {
 
         return null;
+    }
+
+    @Override
+    public List<CommentDto> getAllComments() {
+
+        return commentRepository
+                .findAll()
+                .stream()
+                .map(CommentMapper::toCommentDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<CommentDto> getAllItemComments(Long id) {
+
+        return
     }
 }

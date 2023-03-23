@@ -117,7 +117,7 @@ public class UserServiceImpl implements  UserService{
         try {
             userRepository.deleteById(id);
         } catch (OptimisticLockingFailureException e) {
-            throw new EntityNotFoundException("Ошибка удаления, сушность с id = " + id + " не найдена.");
+            throw new EntityNotFoundException("Ошибка удаления, сущность с id = " + id + " не найдена.");
         }
     }
 }
