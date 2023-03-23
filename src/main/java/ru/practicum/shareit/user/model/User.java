@@ -1,27 +1,30 @@
 package ru.practicum.shareit.user.model;
 
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import javax.validation.constraints.Email;
+import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Positive;
 
-@Data
-@FieldDefaults(level = AccessLevel.PRIVATE)
-@Builder(toBuilder = true)
+@Entity
+@Builder
+@NoArgsConstructor
 @AllArgsConstructor
+@Table(name = "users")
+@Getter @Setter @ToString
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class User {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Positive(message = "Значение поля id у user должно быть положительным.")
     Long id;
 
+    @Column(nullable = false)
     @NotBlank(message = "Имя пользователя не указано.")
-    String login;
+    String name;
 
-    @Email(message = "При написании email-адреса допущена ошибка.")
+    @Column(nullable = false, unique = true)
     String email;
 }

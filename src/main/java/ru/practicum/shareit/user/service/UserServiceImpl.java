@@ -1,27 +1,32 @@
 package ru.practicum.shareit.user.service;
 
-import lombok.RequiredArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
-import ru.practicum.shareit.exception.validation.BadInputParametersException;
-import ru.practicum.shareit.exception.validation.EntityAlreadyExistException;
-import ru.practicum.shareit.exception.validation.EntityExistException;
-import ru.practicum.shareit.exception.validation.InvalidValueException;
-import ru.practicum.shareit.user.dao.UserDao;
-import ru.practicum.shareit.user.dto.UserDto;
+import ru.practicum.shareit.exception.validation.*;
 import ru.practicum.shareit.user.mapper.UserMapper;
+import ru.practicum.shareit.user.repository.UserRepository;
+import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.model.User;
 
+import org.springframework.transaction.annotation.Transactional;
+import javax.validation.ConstraintViolationException;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static ru.practicum.shareit.user.mapper.UserMapper.*;
 
+@Slf4j
 @Service
-@RequiredArgsConstructor
+@AllArgsConstructor
+@Transactional(readOnly = true)
 public class UserServiceImpl implements  UserService{
 
-    private final UserDao userDao;
+    private final UserRepository userRepository;
 
-    private User isAddValid(UserDto user) {
+    private void isValid(UserDto user) {
 
         if (user.getEmail() == null || user.getName() == null) {
             throw new InvalidValueException("Ошибка создания пользователя, некоторые данные не указаны.");
@@ -30,99 +35,89 @@ public class UserServiceImpl implements  UserService{
         if (!user.getEmail().matches("^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$")) {
             throw new InvalidValueException("Неверно указан email-адрес.");
         }
-
-        if (userDao.getAll().stream().anyMatch(reqUser -> user.getEmail().equals(reqUser.getEmail()))) {
-            throw new EntityAlreadyExistException("данный email-адрес уже сушествует.");
-        }
-
-        return UserMapper.fromDtoToUser(user);
-    }
-
-    private User isUpdateValid(Long userId, UserDto user) {
-
-        if (userId == null) {
-            throw new BadInputParametersException("Указан неверный id пользователя.");
-        }
-
-        if (userDao.getAll().stream().noneMatch(updatedUser -> userId.equals(updatedUser.getId()))) {
-            throw new EntityExistException("Ошибка поиска пользователя, " + "запись с id = " + userId + " не найдена.");
-        }
-
-        User updatingUser = userDao.getUser(userId);
-
-        if (user.getName() != null) {
-
-            updatingUser.setLogin(user.getName());
-        }
-
-        if (user.getEmail() != null) {
-
-            if (user.getEmail().equals(updatingUser.getEmail())) {
-
-                updatingUser.setEmail(user.getEmail());
-
-            } else {
-
-                if (userDao.getAll().stream().anyMatch(reqUser -> user.getEmail().equals(reqUser.getEmail()))) {
-                    throw new EntityAlreadyExistException("данный email-адрес уже сушествует.");
-                }
-            }
-
-            updatingUser.setEmail(user.getEmail());
-        }
-
-        return updatingUser;
     }
 
     @Override
     public List<UserDto> getAll() {
 
-        return userDao
-                .getAll()
+        return userRepository
+                .findAll()
                 .stream()
                 .map(UserMapper::toUserDto)
                 .collect(Collectors.toList());
     }
 
+    @Override
+    @Transactional
+    public UserDto addUser(UserDto user) {
+
+        isValid(user);
+
+        try {
+            return toUserDto(userRepository.save(toUser(user)));
+        } catch (DataIntegrityViolationException e) {
+            //Т.к. при создании поля email в таблице мы указали уникальность этого поля, будет выброшено
+            //Низкоуровневое исключение ConstraintViolationException, которое повлечет за собой вызов
+            //Другого исключения, а именно DataIntegrityViolationException
+            //Ранее данное исключение отлавливалось в контроллере исключений, но теперь необходимо индивидуальное
+            //Сообщение
+            if (e.getCause() instanceof ConstraintViolationException) {
+                throw new InvalidEmailException("Пользователь с почтой " + user.getEmail() + " уже существует.");
+            }
+        }
+
+        return null;
+    }
+
+    @Override
+    @Transactional
     public UserDto getUser(Long id) {
 
         if (id == null) {
             throw new BadInputParametersException("Указан неверный id пользователя.");
         }
 
-        if (userDao.getAll().stream().anyMatch(user -> id.equals(user.getId()))) {
-            return UserMapper.toUserDto(userDao.getUser(id));
-        } else {
-            throw new EntityExistException("Ошибка поиска пользователя, " +
+        User user = userRepository.findById(id).orElseThrow(() -> {
+            throw new EntityNotFoundException("Ошибка поиска пользователя, " +
                     "запись с id = " + id + " не найдена.");
-        }
+        });
+
+        return toUserDto(user);
     }
 
     @Override
-    public UserDto addUser(UserDto user) {
-
-        User validUser = isAddValid(user);
-
-        return UserMapper.toUserDto(userDao.addUser(validUser));
-    }
-
-    @Override
+    @Transactional
     public UserDto updateUser(UserDto user, Long userId) {
 
-        User fromDb = isUpdateValid(userId, user);
+        User toUpdate = userRepository.findById(userId).orElseThrow(() -> {
+            throw new EntityNotFoundException("Пользователь с id = " + userId + " не найден");
+        });
 
-        return UserMapper.toUserDto(userDao.updateUser(fromDb));
+        if (user.getName() != null) {toUpdate.setName(user.getName());}
+        if (user.getEmail() != null) {toUpdate.setEmail(user.getEmail());}
+
+        try {
+            return toUserDto(userRepository.save(toUpdate));
+        }  catch (DataIntegrityViolationException e) {
+
+            if (e.getCause() instanceof ConstraintViolationException) {
+                throw new InvalidEmailException("Пользователь с почтой " + user.getEmail() + " уже существует.");
+            }
+        }
+
+        return null;
     }
 
     @Override
+    @Transactional
     public void deleteUser(Long id) {
 
-        if (userDao.getAll().stream().anyMatch(user -> id.equals(user.getId()))) {
-            userDao.deleteUser(id);
-        } else {
-            throw new EntityExistException("Ошибка поиска пользователя, " +
-                    "запись с id = " + id + " не найдена.");
-        }
+        if (id == null) {throw new BadInputParametersException("Значения поле id не может быть пустым.");}
 
+        try {
+            userRepository.deleteById(id);
+        } catch (OptimisticLockingFailureException e) {
+            throw new EntityNotFoundException("Ошибка удаления, сушность с id = " + id + " не найдена.");
+        }
     }
 }

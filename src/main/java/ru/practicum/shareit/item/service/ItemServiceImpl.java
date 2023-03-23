@@ -1,29 +1,44 @@
 package ru.practicum.shareit.item.service;
 
-import lombok.RequiredArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.validation.annotation.Validated;
+import ru.practicum.shareit.booking.service.BookingService;
 import ru.practicum.shareit.exception.validation.BadInputParametersException;
-import ru.practicum.shareit.exception.validation.EntityExistException;
+import ru.practicum.shareit.exception.validation.EntityNotFoundException;
 import ru.practicum.shareit.exception.validation.InvalidValueException;
-import ru.practicum.shareit.item.dao.ItemDao;
+import ru.practicum.shareit.item.dto.CommentDto;
+import ru.practicum.shareit.item.dto.ItemDtoWithBookingAndComment;
+import ru.practicum.shareit.item.repository.CommentRepository;
+import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.mapper.ItemMapper;
 import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.service.UserService;
 
+import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import static ru.practicum.shareit.user.mapper.UserMapper.*;
+import static ru.practicum.shareit.item.mapper.ItemMapper.*;
+
+
+@Slf4j
 @Service
-@Validated
-@RequiredArgsConstructor
+@AllArgsConstructor
+@Transactional(readOnly = true)
 public class ItemServiceImpl implements ItemService{
 
     private final UserService userService;
 
-    private final ItemDao itemDao;
+    private final ItemRepository itemRepository;
+
+    private final CommentRepository commentRepository;
+
+    private BookingService bookingService;
 
     private void isAddValid(Long userId, ItemDto item) {
 
@@ -32,14 +47,12 @@ public class ItemServiceImpl implements ItemService{
         }
 
         if ("".equals(item.getName()) || "".equals(item.getDescription())) {
-            throw new InvalidValueException("Ошибка создания новой вещи, значения некоторых полей пусты.");
+            throw new InvalidValueException("Ошибка создания новой вещи, заполнены не все поля.");
         }
 
         if (userId == null) {
             throw new BadInputParametersException("Id пользователя не указан.");
         }
-
-        userService.getUser(userId);
     }
     
     private Item isUpdateValid(Long userId, ItemDto item) {
@@ -48,16 +61,14 @@ public class ItemServiceImpl implements ItemService{
             throw new BadInputParametersException("Id пользователя не указан.");
         }
 
-        if (itemDao.getAll().stream().noneMatch(fromDb -> item.getId().equals(fromDb.getId()))) {
-            throw new EntityExistException("Ошибка поиска вещи, " +
+        if (itemRepository.findAll().stream().noneMatch(fromDb -> item.getId().equals(fromDb.getId()))) {
+            throw new EntityNotFoundException("Ошибка поиска вещи, " +
                     "запись с id = " + item.getId() + " не найдена.");
         }
-                
-        if (!userId.equals(itemDao.getItemById(item.getId()).getOwner())) {
-            throw new EntityExistException("Ошибка обновления вещи, указан другой владелец.");
-        }
 
-        return itemDao.getItemById(item.getId());
+        itemRepository.getReferenceById(item.getId());
+        throw new EntityNotFoundException("Ошибка обновления вещи, указан другой владелец.");
+
     }
 
     private void isSearchValid(Long userId) {
@@ -70,34 +81,36 @@ public class ItemServiceImpl implements ItemService{
     }
 
     @Override
-    public ItemDto getItem(Long id) {
+    @Transactional
+    public ItemDtoWithBookingAndComment getItem(Long id) {
 
-        if (id == null) {
-            throw new BadInputParametersException("Указан неверный id вещи.");
-        }
+        if (id == null) {throw new BadInputParametersException("Указан неверный id вещи.");}
 
-        if (itemDao.getAll().stream().anyMatch(item -> id.equals(item.getId()))) {
+        if (itemRepository.findAll().stream().anyMatch(item -> id.equals(item.getId()))) {
 
-            return ItemMapper.toItemDto(itemDao.getItemById(id));
+            return mapToItemDtoWithBookingAndComment(itemRepository.getReferenceById(id));
         } else {
-            throw new EntityExistException("Ошибка поиска вещи, " +
+            throw new EntityNotFoundException("Ошибка поиска вещи, " +
                     "запись с id = " + id + " не найдена.");
         }
     }
 
     @Override
+    @Transactional
     public ItemDto addItem(Long userId, ItemDto item) {
 
         isAddValid(userId, item);
 
-        return ItemMapper.toItemDto(itemDao.addItem(
-                Item.builder()
-                        .id((long) itemDao.getAll().size() + 1)
-                        .name(item.getName())
-                        .description(item.getDescription())
-                        .owner(userId)
-                        .available(item.getAvailable())
-                        .build()
+        User user = toUser(userService.getUser(userId));
+
+        return ItemMapper.toItemDto(itemRepository.save(
+                new Item(
+                        (userId + 1),
+                        (item.getName()),
+                        (item.getDescription()),
+                        (userId),
+                        (item.getAvailable()),
+                        0L)
                 )
         );
     }
@@ -111,8 +124,8 @@ public class ItemServiceImpl implements ItemService{
 
         userService.getUser(userId);
 
-        return itemDao
-                .getAll()
+        return itemRepository
+                .findAll()
                 .stream()
                 .filter(item -> Objects.equals(item.getOwner(), userId))
                 .map(ItemMapper::toItemDto)
@@ -133,7 +146,7 @@ public class ItemServiceImpl implements ItemService{
         }
 
         return ItemMapper.toItemDto(
-                itemDao.updateItem(reqItem)
+                itemRepository.save(reqItem)
         );
     }
 
@@ -144,8 +157,8 @@ public class ItemServiceImpl implements ItemService{
 
         isSearchValid(userId);
 
-        return itemDao
-                .getAll()
+        return itemRepository
+                .findAll()
                 .stream()
                 .filter(Item::getAvailable)
                 .filter(item ->
@@ -158,5 +171,11 @@ public class ItemServiceImpl implements ItemService{
                 )
                 .map(ItemMapper::toItemDto)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public CommentDto addComment(CommentDto commentDto, Long itemId, Long userId) {
+
+        return null;
     }
 }
