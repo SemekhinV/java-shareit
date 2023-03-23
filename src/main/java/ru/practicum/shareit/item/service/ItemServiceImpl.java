@@ -72,7 +72,6 @@ public class ItemServiceImpl implements ItemService{
                 () -> {throw new EntityNotFoundException("Вещь с указанным id не найдена.");}
         );
 
-
     }
 
     @Override
@@ -177,6 +176,6 @@ public class ItemServiceImpl implements ItemService{
     @Override
     public List<CommentDto> getAllItemComments(Long id) {
 
-        return
+        return null;
     }
 }

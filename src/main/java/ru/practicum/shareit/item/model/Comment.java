@@ -2,10 +2,10 @@ package ru.practicum.shareit.item.model;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.model.User;
 
 import javax.persistence.*;
+import java.time.LocalDateTime;
 
 @Entity
 @Builder
@@ -29,4 +29,7 @@ public class Comment {
 
     @Column(name = "text", nullable = false)
     String text;
+
+    @Column(nullable = false)
+    LocalDateTime created;
 }
