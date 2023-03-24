@@ -16,7 +16,6 @@ public class ItemDtoWithBookingAndComment extends ItemDto{
 
     BookingDto lastBooking;
     BookingDto nextBooking;
-
     List<CommentDto> comments;
 
     public ItemDtoWithBookingAndComment(Long id,

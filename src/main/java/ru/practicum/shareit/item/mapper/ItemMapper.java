@@ -1,6 +1,6 @@
 package ru.practicum.shareit.item.mapper;
 
-import ru.practicum.shareit.booking.dto.AllFieldBookingDto;
+import ru.practicum.shareit.booking.dto.BookingAllFieldsDto;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
@@ -22,8 +22,8 @@ public class ItemMapper {
     }
 
     public static ItemDtoWithBookingAndComment mapToItemDtoWithBookingAndComment(Item item,
-                                                         AllFieldBookingDto lastBooking,
-                                                         AllFieldBookingDto nextBooking,
+                                                         BookingAllFieldsDto lastBooking,
+                                                         BookingAllFieldsDto nextBooking,
                                                          List<CommentDto> comments) {
         return new ItemDtoWithBookingAndComment(
                 item.getId(),

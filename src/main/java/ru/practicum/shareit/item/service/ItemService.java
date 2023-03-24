@@ -8,7 +8,7 @@ import java.util.List;
 
 public interface ItemService {
 
-    ItemDtoWithBookingAndComment getItem(Long id);
+    ItemDtoWithBookingAndComment getItem(Long id, Long userId);
 
     ItemDto addItem(Long userId, ItemDto item);
 

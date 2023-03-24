@@ -3,6 +3,7 @@ package ru.practicum.shareit.item.service;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.practicum.shareit.booking.dto.BookingAllFieldsDto;
 import ru.practicum.shareit.booking.service.BookingService;
 import ru.practicum.shareit.exception.validation.BadInputParametersException;
 import ru.practicum.shareit.exception.validation.EntityNotFoundException;
@@ -64,12 +65,21 @@ public class ItemServiceImpl implements ItemService{
 
     @Override
     @Transactional
-    public ItemDtoWithBookingAndComment getItem(Long id) {
+    public ItemDtoWithBookingAndComment getItem(Long id, Long userId) {
 
         if (id == null) {throw new BadInputParametersException("Указан неверный id вещи.");}
 
         Item item = itemRepository.findById(id).orElseThrow(
                 () -> {throw new EntityNotFoundException("Вещь с указанным id не найдена.");}
+        );
+
+        List<CommentDto> comments = getAllItemComments(id);
+        BookingAllFieldsDto bookings = bookingService.getBookingByItemIdAndUserId();
+
+        ItemDtoWithBookingAndComment toSend = ItemMapper.mapToItemDtoWithBookingAndComment(
+                item,
+                bookings,
+                comments
         );
 
     }
@@ -176,6 +186,9 @@ public class ItemServiceImpl implements ItemService{
     @Override
     public List<CommentDto> getAllItemComments(Long id) {
 
-        return null;
+        return commentRepository.findAllByUser_IdIsOrOrderByCreated(id)
+                .stream()
+                .map(CommentMapper::toCommentDto)
+                .collect(Collectors.toList());
     }
 }
