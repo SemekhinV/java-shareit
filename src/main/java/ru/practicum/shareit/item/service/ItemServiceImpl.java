@@ -102,6 +102,7 @@ public class ItemServiceImpl implements ItemService{
     }
 
     @Override
+    @Transactional
     public ItemDto updateItem(ItemDto itemDto, Long userId) {
 
         if (userId == null) {throw new BadInputParametersException("Передано пустое значение id пользователя.");}
@@ -128,6 +129,20 @@ public class ItemServiceImpl implements ItemService{
     }
 
     @Override
+    @Transactional
+    public void deleteItem(Long itemId) {
+
+        if (itemId == null) {throw new BadInputParametersException("Передано пустое значение.");}
+
+        Item item = itemRepository.findById(itemId).orElseThrow(
+                () -> {throw new EntityNotFoundException("Вещь с id = " + itemId + " не найдена.");}
+        );
+
+        itemRepository.delete(item);
+    }
+
+    @Override
+    @Transactional
     public List<ItemDto> getAllUsersItems(Long userId) {
 
         if (userId == null) {
@@ -145,6 +160,7 @@ public class ItemServiceImpl implements ItemService{
     }
 
     @Override
+    @Transactional
     public List<ItemDto> searchForItems(Long userId, String text) {
 
         if (text.isBlank()) {return List.of();}
@@ -168,12 +184,14 @@ public class ItemServiceImpl implements ItemService{
     }
 
     @Override
+    @Transactional
     public CommentDto addComment(CommentDto commentDto, Long itemId, Long userId) {
 
         return null;
     }
 
     @Override
+    @Transactional
     public List<CommentDto> getAllComments() {
 
         return commentRepository
@@ -184,11 +202,28 @@ public class ItemServiceImpl implements ItemService{
     }
 
     @Override
+    @Transactional
     public List<CommentDto> getAllItemComments(Long id) {
 
-        return commentRepository.findAllByUser_IdIsOrOrderByCreated(id)
+        return commentRepository.findAllByUser_IdIsOrderByCreated(id)
                 .stream()
                 .map(CommentMapper::toCommentDto)
                 .collect(Collectors.toList());
     }
+
+    @Override
+    @Transactional
+    public List<ItemDto> getItemsByRequestId(Long requestId) {
+
+        if (requestId == null ) {
+            throw new BadInputParametersException("Передано пустое значение.");
+        }
+
+        return itemRepository
+                .findAllByRequest_IdIs(requestId)
+                .stream()
+                .map(ItemMapper::toItemDto)
+                .collect(Collectors.toList());
+    }
+
 }

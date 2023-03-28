@@ -9,22 +9,22 @@ import ru.practicum.shareit.user.mapper.UserMapper;
 
 public class BookingMapper {
 
-    public static Booking toDto(BookingFromRequestDto booking) {
+    public static Booking toBooking(BookingFromRequestDto booking) {
 
         return Booking.builder()
-                .starDate(booking.getStart())
+                .startDate(booking.getStart())
                 .endDate(booking.getEnd())
                 .build();
     }
 
-    public static BookingAllFieldsDto toDbSave(Booking booking) {
+    public static BookingAllFieldsDto toAllFieldsDto(Booking booking) {
 
         return BookingAllFieldsDto.builder()
                 .id(booking.getId())
-                .start(booking.getStarDate())
+                .start(booking.getStartDate())
                 .end(booking.getEndDate())
                 .item(booking.getItem() != null ? ItemMapper.toItemDto(booking.getItem()) : null)
-                .booker(booking.getUser() != null ? UserMapper.toUserDto(booking.getUser()) : null)
+                .booker(booking.getOwner() != null ? UserMapper.toUserDto(booking.getOwner()) : null)
                 .status(booking.getStatus().name())
                 .build();
     }

@@ -25,14 +25,14 @@ public class Booking {
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
-    User user;
+    User owner;
 
     @ManyToOne
     @JoinColumn(name = "item_id", nullable = false)
     Item item;
 
     @Column(name = "start_date", nullable = false)
-    LocalDateTime starDate;
+    LocalDateTime startDate;
 
     @Column(name = "end_date", nullable = false)
     LocalDateTime endDate;

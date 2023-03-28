@@ -11,9 +11,7 @@ import java.util.List;
 @Repository
 public interface ItemRepository extends JpaRepository<Item, Long> {
 
-    List<Item> findAllItemByOwner_IdIs(Long owner_id);
-
-    List<Item> findAllByRequestIn(List<ItemRequest> requests);
+    List<Item> findAllByOwner_IdIs(Long owner_id);
 
     List<Item> findAllByRequest_IdIs(Long request_id);
 
