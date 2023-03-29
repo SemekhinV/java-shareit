@@ -23,7 +23,7 @@ public class ItemMapper {
 
     public static ItemDtoWithBookingAndComment mapToItemDtoWithBookingAndComment(Item item,
                                                          BookingAllFieldsDto lastBooking,
-                                                         BookingAllFieldsDto nextBooking,
+                                                         BookingAllFieldsDto futureBooking,
                                                          List<CommentDto> comments) {
         return new ItemDtoWithBookingAndComment(
                 item.getId(),
@@ -33,7 +33,7 @@ public class ItemMapper {
                 item.getOwner() != null ? item.getOwner().getId() : null,
                 item.getRequest() != null ? item.getRequest().getId() : null,
                 lastBooking != null ? new BookingDto(lastBooking.getId(), lastBooking.getBooker().getId()) : null,
-                nextBooking != null ? new BookingDto(nextBooking.getId(), nextBooking.getBooker().getId()) : null,
+                futureBooking != null ? new BookingDto(futureBooking.getId(), futureBooking.getBooker().getId()) : null,
                 comments != null ? comments : List.of()
         );
     }

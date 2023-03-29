@@ -20,7 +20,7 @@ public class ItemRequestController {
             @PathVariable Long requestId
     ) {
 
-        return requestService.getSingleItemRequest(userId, requestId);
+        return requestService.getItemRequestById(userId, requestId);
     }
 
     @PostMapping()

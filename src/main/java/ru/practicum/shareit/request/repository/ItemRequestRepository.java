@@ -8,5 +8,5 @@ import ru.practicum.shareit.request.model.ItemRequest;
 @Repository
 public interface ItemRequestRepository extends JpaRepository<ItemRequest, Long> {
 
-    List<ItemRequest> findItemRequestByRequester_IdIsOrderByCreated(Long requester_id);
+    List<ItemRequest> findItemRequestsByRequester_IdIsOrderByCreated(Long requester_id);
 }

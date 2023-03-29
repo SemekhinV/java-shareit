@@ -43,4 +43,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     //FUTURE
     List<Booking> findBookingByItem_Owner_IdIsAndStartDateAfterOrderByStartDate(Long owner_id, LocalDateTime starDate);
+
+    //Для get запроса вещи
+    List<Booking> findAllByItem_IdIsAndOwner_IdIsOrderByStartDate(Long item_id, Long owner_id);
 }

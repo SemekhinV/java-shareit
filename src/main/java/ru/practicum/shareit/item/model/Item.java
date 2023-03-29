@@ -6,8 +6,6 @@ import ru.practicum.shareit.request.model.ItemRequest;
 import ru.practicum.shareit.user.model.User;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Positive;
 
 @Entity
 @NoArgsConstructor
@@ -20,15 +18,12 @@ public class Item {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Positive(message = "Значие id у вещи должно быть положительным.")
     Long id;
 
     @Column(name = "name", nullable = false)
-    @NotBlank(message = "Название вещи не может быть пустым")
     String name;
 
     @Column(name = "description", nullable = false)
-    @NotBlank(message = "Описаниеи вещи не может быть пустым")
     String description;
 
     @ManyToOne

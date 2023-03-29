@@ -8,21 +8,25 @@ import ru.practicum.shareit.booking.service.BookingService;
 import ru.practicum.shareit.exception.validation.BadInputParametersException;
 import ru.practicum.shareit.exception.validation.EntityNotFoundException;
 import ru.practicum.shareit.exception.validation.InvalidValueException;
+import ru.practicum.shareit.exception.validation.PermissionDeniedException;
 import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDtoWithBookingAndComment;
 import ru.practicum.shareit.item.mapper.CommentMapper;
+import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.repository.CommentRepository;
 import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.mapper.ItemMapper;
 import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.request.model.ItemRequest;
 import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.service.UserService;
 
 import org.springframework.transaction.annotation.Transactional;
-import java.util.List;
-import java.util.Objects;
+
+import java.time.LocalDateTime;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -63,25 +67,70 @@ public class ItemServiceImpl implements ItemService{
         userService.getUser(userId);
     }
 
+    private void isAddCommentValid(CommentDto commentDto, Long userId, Long itemId) {
+
+        if (itemId == null || userId == null) {
+            throw new BadInputParametersException("Передано пустое значение.");
+        }
+
+        if (commentDto.getText() == null || commentDto.getText().isBlank()) {
+            throw new InvalidValueException("Комментарий не может быть пустым.");
+        }
+    }
+
     @Override
     @Transactional
-    public ItemDtoWithBookingAndComment getItem(Long id, Long userId) {
+    public List<ItemDto> getAllUsersItems(Long userId) {
 
-        if (id == null) {throw new BadInputParametersException("Указан неверный id вещи.");}
+        if (userId == null) {
+            throw new BadInputParametersException("Переданы пустые для значения поиска.");
+        }
 
-        Item item = itemRepository.findById(id).orElseThrow(
+        userService.getUser(userId);
+
+        List<Item> userItems = itemRepository.findAllByOwner_IdIs(userId);
+
+        //Можем смотреть тк хозяин вещи
+        Map<Long, List<BookingAllFieldsDto>> bookings = bookingService
+                .getAllUserItemsBooking(userId, null)
+                .stream()
+                .collect(Collectors.groupingBy(bookingAllFieldsDto -> bookingAllFieldsDto.getItem().getId()));
+
+        Map<Long, List<CommentDto>> comments = getAllComments()
+                .stream()
+                .collect(Collectors.groupingBy(CommentDto::getItemId));
+
+        return userItems
+                .stream()
+                .map(item -> ItemMapper.mapToItemDtoWithBookingAndComment(
+                        item,
+                        getLastBooking(bookings.get(item.getId())),
+                        getFutureBooking(bookings.get(item.getId())),
+                        comments.get(item.getId())
+                ))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public ItemDtoWithBookingAndComment getItem(Long itemId, Long userId) {
+
+        if (itemId == null || userId == null) {throw new BadInputParametersException("Указан неверный id вещи.");}
+
+        Item item = itemRepository.findById(itemId).orElseThrow(
                 () -> {throw new EntityNotFoundException("Вещь с указанным id не найдена.");}
         );
 
-        List<CommentDto> comments = getAllItemComments(id);
-        BookingAllFieldsDto bookings = bookingService.getBookingByItemIdAndUserId();
+        List<CommentDto> comments = getAllItemComments(itemId);
 
-        ItemDtoWithBookingAndComment toSend = ItemMapper.mapToItemDtoWithBookingAndComment(
+        List<BookingAllFieldsDto> bookings = bookingService.getBookingsByItemId(itemId, userId);
+
+        return ItemMapper.mapToItemDtoWithBookingAndComment(
                 item,
-                bookings,
+                getLastBooking(bookings),
+                getFutureBooking(bookings),
                 comments
         );
-
     }
 
     @Override
@@ -112,15 +161,15 @@ public class ItemServiceImpl implements ItemService{
         );
 
         if (!item.getOwner().getId().equals(userId)) {
-            throw new InvalidValueException("Указанный пользователь не является хозяином.");
+            throw new PermissionDeniedException("Указанный пользователь не является хозяином.");
         }
 
         if (itemDto.getName() != null) {
-            item.setName(item.getName());
+            item.setName(itemDto.getName());
         } if (itemDto.getDescription() != null) {
-            item.setDescription(item.getDescription());
+            item.setDescription(itemDto.getDescription());
         } if (itemDto.getAvailable() != null) {
-            item.setAvailable(item.getAvailable());
+            item.setAvailable(itemDto.getAvailable());
         }
 
         Item fromDb = itemRepository.save(item);
@@ -141,23 +190,7 @@ public class ItemServiceImpl implements ItemService{
         itemRepository.delete(item);
     }
 
-    @Override
-    @Transactional
-    public List<ItemDto> getAllUsersItems(Long userId) {
 
-        if (userId == null) {
-            throw new BadInputParametersException("Переданы пустые для значения поиска.");
-        }
-
-        userService.getUser(userId);
-
-        return itemRepository
-                .findAll()
-                .stream()
-                .filter(item -> Objects.equals(item.getOwner(), userId))
-                .map(ItemMapper::toItemDto)
-                .collect(Collectors.toList());
-    }
 
     @Override
     @Transactional
@@ -168,17 +201,8 @@ public class ItemServiceImpl implements ItemService{
         isSearchValid(userId);
 
         return itemRepository
-                .findAll()
+                .searchForItems(text)
                 .stream()
-                .filter(Item::getAvailable)
-                .filter(item ->
-                        item.getDescription()
-                                .toLowerCase()
-                                .contains(
-                                        text
-                                        .toLowerCase()
-                                        .strip())
-                )
                 .map(ItemMapper::toItemDto)
                 .collect(Collectors.toList());
     }
@@ -187,7 +211,34 @@ public class ItemServiceImpl implements ItemService{
     @Transactional
     public CommentDto addComment(CommentDto commentDto, Long itemId, Long userId) {
 
-        return null;
+        isAddCommentValid(commentDto, userId, itemId);
+
+        User user = UserMapper.toUser(userService.getUser(userId));
+
+        Item item = itemRepository.findById(itemId).orElseThrow(
+                () -> {throw new EntityNotFoundException("Вещь с id = " + itemId + " не найдена.");}
+        );
+
+        List<BookingAllFieldsDto> bookings = bookingService.getAllUserItemsBooking(userId, "PAST");
+
+        //Проверка на взятие именно этой вещи в аренду пользователем
+        if (bookings.isEmpty() ||
+                bookings
+                .stream()
+                .noneMatch(booking -> booking.getItem().getId().equals(itemId))
+        ) {
+            throw new PermissionDeniedException("Нельзя оставить отзыв не арендовав вещь.");
+        }
+
+        Comment comment = CommentMapper.toComment(commentDto);
+
+        comment.setItem(item);
+        comment.setUser(user);
+        comment.setCreated(LocalDateTime.now());
+
+        Comment response = commentRepository.save(comment);
+
+        return CommentMapper.toCommentDto(response);
     }
 
     @Override
@@ -224,6 +275,47 @@ public class ItemServiceImpl implements ItemService{
                 .stream()
                 .map(ItemMapper::toItemDto)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public List<ItemDto> findItemsByRequestsList(List<ItemRequest> requests) {
+
+        return itemRepository
+                .findAllByRequestIn(requests)
+                .stream()
+                .map(ItemMapper::toItemDto)
+                .collect(Collectors.toList());
+    }
+
+    private BookingAllFieldsDto getFutureBooking(List<BookingAllFieldsDto> bookings) {
+
+        if (bookings != null) {
+
+            return bookings
+                    .stream()
+                    .filter(booking -> booking.getStart().isAfter(LocalDateTime.now()))
+                    .min(Comparator.comparing(BookingAllFieldsDto::getStart))
+                    .orElse(null);
+        } else {
+
+            return null;
+        }
+    }
+
+    private BookingAllFieldsDto getLastBooking(List<BookingAllFieldsDto> bookings) {
+
+        if (bookings != null) {
+
+            return bookings
+                    .stream()
+                    .filter(booking -> booking.getEnd().isBefore(LocalDateTime.now()))
+                    .max(Comparator.comparing(BookingAllFieldsDto::getEnd))
+                    .orElse(null);
+        } else {
+
+            return null;
+        }
     }
 
 }

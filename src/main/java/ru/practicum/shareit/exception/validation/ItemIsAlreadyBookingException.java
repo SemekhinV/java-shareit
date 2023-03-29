@@ -1,4 +1,4 @@
-package ru.practicum.shareit.exception.validation.custom_response;
+package ru.practicum.shareit.exception.validation;
 
 public class ItemIsAlreadyBookingException extends RuntimeException {
 

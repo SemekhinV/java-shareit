@@ -4,6 +4,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemDtoWithBookingAndComment;
+import ru.practicum.shareit.request.model.ItemRequest;
 
 import java.util.List;
 
@@ -28,4 +29,7 @@ public interface ItemService {
     List<CommentDto> getAllComments();
 
     List<ItemDto> getItemsByRequestId(Long requestId);
+
+    @Transactional
+    List<ItemDto> findItemsByRequestsList(List<ItemRequest> requests);
 }

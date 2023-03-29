@@ -10,11 +10,7 @@ import ru.practicum.shareit.booking.mapper.BookingMapper;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.repository.BookingRepository;
 import ru.practicum.shareit.booking.status.Status;
-import ru.practicum.shareit.exception.validation.BadInputParametersException;
-import ru.practicum.shareit.exception.validation.EntityNotFoundException;
-import ru.practicum.shareit.exception.validation.InvalidValueException;
-import ru.practicum.shareit.exception.validation.PermissionDeniedException;
-import ru.practicum.shareit.exception.validation.custom_response.ItemIsAlreadyBookingException;
+import ru.practicum.shareit.exception.validation.*;
 import ru.practicum.shareit.item.dto.ItemDtoWithBookingAndComment;
 import ru.practicum.shareit.item.mapper.ItemMapper;
 import ru.practicum.shareit.item.model.Item;
@@ -40,20 +36,19 @@ public class BookingServiceImpl implements BookingService {
     private void isValid(BookingFromRequestDto booking) {
 
         if (booking.getStart() == null) {
-            throw new  InvalidValueException("Дата старта аренды не может быть пустой.");
+            throw new InvalidValueException("Дата старта аренды не может быть пустой.");
         }
         if (booking.getEnd() == null) {
-            throw new  InvalidValueException("Дата конца аренды не может быть пустой.");
+            throw new InvalidValueException("Дата конца аренды не может быть пустой.");
         }
         if (booking.getStart().isBefore(LocalDateTime.now())) {
-            throw new  InvalidValueException("Дата старта аренды не может быть в прошлом.");
+            throw new InvalidValueException("Дата старта аренды не может быть в прошлом.");
         }
-        if (booking.getEnd().isBefore(LocalDateTime.now())) {
-            throw new  InvalidValueException("Дата конца аренды не может быть в будущем.");
+        if (booking.getStart().equals(booking.getEnd())) {
+            throw new InvalidValueException("Даты старта и конца аренды не могут совпадать.");
         }
-        if (booking.getEnd().isAfter(booking.getStart()) ||
-                booking.getEnd().isBefore(LocalDateTime.now())) {
-            throw new  InvalidValueException("Дата конца аренды не может быть после старка аренды.");
+        if (booking.getEnd().isBefore(booking.getStart()) || booking.getEnd().isBefore(LocalDateTime.now())) {
+            throw new InvalidValueException("Некорректно указаны временные рамки.");
         }
     }
 
@@ -64,12 +59,14 @@ public class BookingServiceImpl implements BookingService {
         }
     }
 
+    @Override
+    @Transactional
     public BookingAllFieldsDto saveBooking(BookingFromRequestDto bookingDto, ItemDtoWithBookingAndComment itemDto, Long userId) {
 
         if (userId == null) {throw new BadInputParametersException("Передано пустое id пользователя.");}
 
         if (!itemDto.getAvailable()) {
-            throw new InvalidValueException("Вещь недоступна для бронирования.");
+            throw new ItemUnavailableException("Вещь недоступна для бронирования.");
         }
 
         isValid(bookingDto);
@@ -97,7 +94,7 @@ public class BookingServiceImpl implements BookingService {
         return BookingMapper.toAllFieldsDto(response);
     }
 
-
+    @Override
     public BookingAllFieldsDto getBooking(Long bookingId, Long userId) {
 
         isIdValid(bookingId, userId);
@@ -107,14 +104,25 @@ public class BookingServiceImpl implements BookingService {
         );
 
         if (!booking.getOwner().getId().equals(userId) || !booking.getItem().getOwner().getId().equals(userId)) {
-            throw new InvalidValueException("У пользователя с id = " + userId + " нет прав для просмотра.");
+            throw new PermissionDeniedException("У пользователя с id = " + userId + " нет прав для просмотра.");
         }
 
         return BookingMapper.toAllFieldsDto(booking);
     }
 
     @Override
-    public BookingAllFieldsDto approveBooking(Long userId, Long bookingId, Boolean approve) {
+    public List<BookingAllFieldsDto> getBookingsByItemId(Long itemId, Long userId) {
+
+        return bookingRepository
+                .findAllByItem_IdIsAndOwner_IdIsOrderByStartDate(itemId, userId)
+                .stream()
+                .map(BookingMapper::toAllFieldsDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public BookingAllFieldsDto approveBooking(Long userId, Long bookingId, boolean approve) {
 
         isIdValid(userId, bookingId);
 
@@ -188,7 +196,10 @@ public class BookingServiceImpl implements BookingService {
 
         if (Status.ALL.name().equals(state) || state == null) {
 
-            response = bookingRepository.findBookingsByOwner_IdIsOrderByStartDate(userId);
+            return bookingRepository.findBookingsByOwner_IdIsOrderByStartDate(userId)
+                    .stream()
+                    .map(BookingMapper::toAllFieldsDto)
+                    .collect(Collectors.toList());
         }
 
         if (Status.PAST.name().equals(state)) {
