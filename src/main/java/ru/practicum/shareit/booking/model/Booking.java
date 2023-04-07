@@ -11,10 +11,10 @@ import javax.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "Booking")
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Table(name = "Booking")
 @Getter @Setter @ToString
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class Booking {
@@ -24,8 +24,8 @@ public class Booking {
     Long id;
 
     @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
-    User owner;
+    @JoinColumn(name = "booker_id", nullable = false)
+    User booker;
 
     @ManyToOne
     @JoinColumn(name = "item_id", nullable = false)

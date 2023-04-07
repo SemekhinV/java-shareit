@@ -9,7 +9,7 @@ import java.util.List;
 @Repository
 public interface CommentRepository extends JpaRepository<Comment, Long> {
 
-    List<Comment> findAllByUser_IdIsOrderByCreated(Long user_id);
+    List<Comment> findAllByAuthor_IdIsOrderByCreated(Long user_id);
 
     List<Comment>findAllByItem_IdIsOrderByCreated(Long item_id);
 }

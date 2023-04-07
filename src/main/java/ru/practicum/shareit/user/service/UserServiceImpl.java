@@ -62,7 +62,7 @@ public class UserServiceImpl implements  UserService{
             //Ранее данное исключение отлавливалось в контроллере исключений, но теперь необходимо индивидуальное
             //Сообщение
             if (e.getCause() instanceof ConstraintViolationException) {
-                throw new InvalidEmailException("Пользователь с почтой " + user.getEmail() + " уже существует.");
+                throw new EmailException("Пользователь с почтой " + user.getEmail() + " уже существует.");
             }
         }
 
@@ -101,7 +101,7 @@ public class UserServiceImpl implements  UserService{
         }  catch (DataIntegrityViolationException e) {
 
             if (e.getCause() instanceof ConstraintViolationException) {
-                throw new InvalidEmailException("Пользователь с почтой " + user.getEmail() + " уже существует.");
+                throw new InvalidValueException("Пользователь с почтой " + user.getEmail() + " уже существует.");
             }
         }
 

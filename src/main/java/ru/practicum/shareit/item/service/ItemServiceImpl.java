@@ -8,7 +8,6 @@ import ru.practicum.shareit.booking.service.BookingService;
 import ru.practicum.shareit.exception.validation.BadInputParametersException;
 import ru.practicum.shareit.exception.validation.EntityNotFoundException;
 import ru.practicum.shareit.exception.validation.InvalidValueException;
-import ru.practicum.shareit.exception.validation.PermissionDeniedException;
 import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDtoWithBookingAndComment;
 import ru.practicum.shareit.item.mapper.CommentMapper;
@@ -92,7 +91,7 @@ public class ItemServiceImpl implements ItemService{
 
         //Можем смотреть тк хозяин вещи
         Map<Long, List<BookingAllFieldsDto>> bookings = bookingService
-                .getAllUserItemsBooking(userId, null)
+                .getAllUserItemsBookings(userId, null)
                 .stream()
                 .collect(Collectors.groupingBy(bookingAllFieldsDto -> bookingAllFieldsDto.getItem().getId()));
 
@@ -161,7 +160,7 @@ public class ItemServiceImpl implements ItemService{
         );
 
         if (!item.getOwner().getId().equals(userId)) {
-            throw new PermissionDeniedException("Указанный пользователь не является хозяином.");
+            throw new BadInputParametersException("Указанный пользователь не является хозяином.");
         }
 
         if (itemDto.getName() != null) {
@@ -219,7 +218,7 @@ public class ItemServiceImpl implements ItemService{
                 () -> {throw new EntityNotFoundException("Вещь с id = " + itemId + " не найдена.");}
         );
 
-        List<BookingAllFieldsDto> bookings = bookingService.getAllUserItemsBooking(userId, "PAST");
+        List<BookingAllFieldsDto> bookings = bookingService.getAllBookingsOfCurrentUser(userId, "PAST");
 
         //Проверка на взятие именно этой вещи в аренду пользователем
         if (bookings.isEmpty() ||
@@ -227,13 +226,13 @@ public class ItemServiceImpl implements ItemService{
                 .stream()
                 .noneMatch(booking -> booking.getItem().getId().equals(itemId))
         ) {
-            throw new PermissionDeniedException("Нельзя оставить отзыв не арендовав вещь.");
+            throw new InvalidValueException("Нельзя оставить отзыв не арендовав вещь.");
         }
 
         Comment comment = CommentMapper.toComment(commentDto);
 
         comment.setItem(item);
-        comment.setUser(user);
+        comment.setAuthor(user);
         comment.setCreated(LocalDateTime.now());
 
         Comment response = commentRepository.save(comment);
@@ -254,9 +253,9 @@ public class ItemServiceImpl implements ItemService{
 
     @Override
     @Transactional
-    public List<CommentDto> getAllItemComments(Long id) {
+    public List<CommentDto> getAllItemComments(Long itemId) {
 
-        return commentRepository.findAllByUser_IdIsOrderByCreated(id)
+        return commentRepository.findAllByItem_IdIsOrderByCreated(itemId)
                 .stream()
                 .map(CommentMapper::toCommentDto)
                 .collect(Collectors.toList());
@@ -295,7 +294,7 @@ public class ItemServiceImpl implements ItemService{
             return bookings
                     .stream()
                     .filter(booking -> booking.getStart().isAfter(LocalDateTime.now()))
-                    .min(Comparator.comparing(BookingAllFieldsDto::getStart))
+                    .min(Comparator.comparing(BookingAllFieldsDto::getEnd))
                     .orElse(null);
         } else {
 
@@ -309,7 +308,7 @@ public class ItemServiceImpl implements ItemService{
 
             return bookings
                     .stream()
-                    .filter(booking -> booking.getEnd().isBefore(LocalDateTime.now()))
+                    .filter(booking -> booking.getStart().isBefore(LocalDateTime.now()))
                     .max(Comparator.comparing(BookingAllFieldsDto::getEnd))
                     .orElse(null);
         } else {

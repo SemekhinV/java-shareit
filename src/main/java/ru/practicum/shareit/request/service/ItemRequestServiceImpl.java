@@ -87,7 +87,7 @@ public class ItemRequestServiceImpl implements ItemRequestService {
 
         userService.getUser(userId);
 
-        List<ItemRequest> itemRequests = requestRepository.findItemRequestsByRequester_IdIsOrderByCreated(userId);
+        List<ItemRequest> itemRequests = requestRepository.findItemRequestsByRequester_IdIsOrderByCreatedDesc(userId);
 
         Map<Long,List<ItemDto>> items = itemService.findItemsByRequestsList(itemRequests)
                 .stream()

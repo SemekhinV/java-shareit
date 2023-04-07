@@ -12,5 +12,5 @@ public class BookingDto {
 
     Long id;
 
-    Long userId;
+    Long bookerId;
 }

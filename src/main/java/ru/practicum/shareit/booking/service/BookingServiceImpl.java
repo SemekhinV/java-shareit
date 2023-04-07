@@ -45,7 +45,7 @@ public class BookingServiceImpl implements BookingService {
             throw new InvalidValueException("Дата старта аренды не может быть в прошлом.");
         }
         if (booking.getStart().equals(booking.getEnd())) {
-            throw new InvalidValueException("Даты старта и конца аренды не могут совпадать.");
+            throw new InvalidValueException("Начало аренды не может быть равно ее концу.");
         }
         if (booking.getEnd().isBefore(booking.getStart()) || booking.getEnd().isBefore(LocalDateTime.now())) {
             throw new InvalidValueException("Некорректно указаны временные рамки.");
@@ -61,12 +61,20 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional
-    public BookingAllFieldsDto saveBooking(BookingFromRequestDto bookingDto, ItemDtoWithBookingAndComment itemDto, Long userId) {
+    public BookingAllFieldsDto saveBooking(
+            BookingFromRequestDto bookingDto,
+            ItemDtoWithBookingAndComment itemDto,
+            Long userId
+    ) {
 
         if (userId == null) {throw new BadInputParametersException("Передано пустое id пользователя.");}
 
+        if (itemDto.getUserId().equals(userId)) {
+            throw new EntityNotFoundException("Хозяин не может арендовать собственную вещь.");
+        }
+
         if (!itemDto.getAvailable()) {
-            throw new ItemUnavailableException("Вещь недоступна для бронирования.");
+            throw new InvalidValueException("Вещь недоступна для бронирования.");
         }
 
         isValid(bookingDto);
@@ -75,18 +83,21 @@ public class BookingServiceImpl implements BookingService {
 
         Item item = ItemMapper.toItem(itemDto);
 
-        if (!bookingRepository.findBookingsByItem_IdIsAndStatusAndEndDateAfter(
-                itemDto.getId(),
+        List<Booking> bookings = bookingRepository.findsForIntersection(
+                item.getId(),
                 Status.APPROVED,
+                bookingDto.getStart(),
                 bookingDto.getEnd()
-        ).isEmpty()) {
-            throw new ItemIsAlreadyBookingException("В данный промежуток времени вещь еще будет в аренде.");
+        );
+
+        if (!bookings.isEmpty()) {
+            throw new EntityNotFoundException("В данный промежуток времени вещь еще будет в аренде.");
         }
 
         Booking booking = BookingMapper.toBooking(bookingDto);
 
         booking.setItem(item);
-        booking.setOwner(user);
+        booking.setBooker(user);
         booking.setStatus(Status.WAITING);
 
         Booking response = bookingRepository.save(booking);
@@ -95,16 +106,19 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    @Transactional
     public BookingAllFieldsDto getBooking(Long bookingId, Long userId) {
 
         isIdValid(bookingId, userId);
+
+        userService.getUser(userId);
 
         Booking booking = bookingRepository.findById(bookingId).orElseThrow(
                 () -> {throw new EntityNotFoundException("Аренда с id = " + bookingId + " не найдена.");}
         );
 
-        if (!booking.getOwner().getId().equals(userId) || !booking.getItem().getOwner().getId().equals(userId)) {
-            throw new PermissionDeniedException("У пользователя с id = " + userId + " нет прав для просмотра.");
+        if (!booking.getBooker().getId().equals(userId) && !booking.getItem().getOwner().getId().equals(userId)) {
+            throw new EntityNotFoundException("У пользователя с id = " + userId + " нет прав для просмотра.");
         }
 
         return BookingMapper.toAllFieldsDto(booking);
@@ -114,7 +128,7 @@ public class BookingServiceImpl implements BookingService {
     public List<BookingAllFieldsDto> getBookingsByItemId(Long itemId, Long userId) {
 
         return bookingRepository
-                .findAllByItem_IdIsAndOwner_IdIsOrderByStartDate(itemId, userId)
+                .findBookingsForItemGerRequest(itemId, userId)
                 .stream()
                 .map(BookingMapper::toAllFieldsDto)
                 .collect(Collectors.toList());
@@ -126,16 +140,21 @@ public class BookingServiceImpl implements BookingService {
 
         isIdValid(userId, bookingId);
 
+        userService.getUser(userId);
+
         Booking booking = bookingRepository.findById(bookingId).orElseThrow(
                 () -> {throw new EntityNotFoundException("Аренда с id = " + bookingId + " не найдена.");}
         );
 
+        if (booking.getBooker().getId().equals(userId))
+            throw new EntityNotFoundException("Подтверждение возможно только хозяином вещи.");
+
         if (!booking.getItem().getOwner().getId().equals(userId)) {
-            throw new PermissionDeniedException("У пользователя с id = " + userId + " нет прав для подтверждения.");
+            throw new InvalidValueException("У пользователя с id = " + userId + " нет прав для подтверждения.");
         }
 
-        if (booking.getStatus() != Status.WAITING) {
-            throw new PermissionDeniedException("Запрос на аренду уже был рассмотрен.");
+        if (!booking.getStatus().equals(Status.WAITING)) {
+            throw new InvalidValueException("Запрос уже рассмотрен");
         }
 
         booking.setStatus(approve ? Status.APPROVED : Status.REJECTED);
@@ -150,35 +169,45 @@ public class BookingServiceImpl implements BookingService {
 
         if (userId == null) {throw new BadInputParametersException("Передан пустой параметр.");}
 
+        userService.getUser(userId);
+
         List<Booking> response = null;
 
         if (Status.ALL.name().equals(state) || state == null) {
-            response = bookingRepository.findBookingsByOwner_IdIsOrderByStartDate(userId);
+
+            return bookingRepository.findBookingsByBooker_IdIsOrderByStartDateDesc(userId)
+                    .stream()
+                    .map(BookingMapper::toAllFieldsDto)
+                    .collect(Collectors.toList());
         }
 
         if (Status.PAST.name().equals(state)) {
-            response = bookingRepository.findBookingByOwner_IdIsAndEndDateBeforeOrderByStartDate
+            response = bookingRepository.findBookingByBooker_IdIsAndEndDateBeforeOrderByStartDateDesc
                     (userId, LocalDateTime.now());
         }
 
         if (Status.CURRENT.name().equals(state)) {
             response = bookingRepository
-                    .findBookingByOwner_IdIsAndStartDateBeforeAndEndDateAfterOrderByStartDate
+                    .findBookingByBooker_IdIsAndStartDateBeforeAndEndDateAfterOrderByStartDateDesc
                             (userId, LocalDateTime.now(), LocalDateTime.now());
         }
 
-        if (Status.CURRENT.name().equals(state)) {
-            response = bookingRepository.findBookingByOwner_IdIsAndStartDateAfterOrderByStartDate
+        if (Status.FUTURE.name().equals(state)) {
+            response = bookingRepository.findBookingByBooker_IdIsAndStartDateAfterOrderByStartDateDesc
                     (userId, LocalDateTime.now());
         }
 
-        if (Arrays.asList(Status.values()).contains(Status.valueOf(state))) {
+        //Использовать метод .contains() не получилось, тк нет возможности нормально обработать ситуацию с
+        //Неизвестным программе статусом
+        if (response == null && Arrays.stream(Status.values()).anyMatch(status -> status.name().equals(state))) {
 
-            response = bookingRepository.findBookingByOwner_IdIsAndStatusIsOrderByStartDate(userId, Status.valueOf(state));
+            response = bookingRepository.findBookingByBooker_IdIsAndStatusIsOrderByStartDateDesc(
+                    userId, Status.valueOf(state)
+            );
         }
 
         if (response == null) {
-            throw new EntityNotFoundException("Не удалось найти бронирование по выбранным критериям.");
+            throw new BadInputParametersException("Unknown state: UNSUPPORTED_STATUS");
         }
 
         return response
@@ -188,50 +217,53 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public List<BookingAllFieldsDto> getAllUserItemsBooking(Long userId, String state) {
+    public List<BookingAllFieldsDto> getAllUserItemsBookings(Long userId, String state) {
 
         if (userId == null) {throw new BadInputParametersException("Передано пустое значение.");}
+
+        userService.getUser(userId);
 
         List<Booking> response = null;
 
         if (Status.ALL.name().equals(state) || state == null) {
 
-            return bookingRepository.findBookingsByOwner_IdIsOrderByStartDate(userId)
-                    .stream()
-                    .map(BookingMapper::toAllFieldsDto)
-                    .collect(Collectors.toList());
+           return bookingRepository.findAllByItem_Owner_IdIsOrderByStartDateDesc(userId)
+                   .stream()
+                   .map(BookingMapper::toAllFieldsDto)
+                   .collect(Collectors.toList());
         }
 
         if (Status.PAST.name().equals(state)) {
 
-            response = bookingRepository.findBookingByItem_Owner_IdIsAndEndDateBeforeOrderByStartDate(
+            response = bookingRepository.findBookingByItem_Owner_IdIsAndEndDateBeforeOrderByStartDateDesc(
                     userId, LocalDateTime.now()
             );
         }
 
         if (Status.CURRENT.name().equals(state)) {
 
-            response = bookingRepository.findBookingByItem_Owner_IdIsAndStartDateBeforeAndEndDateAfterOrderByStartDate(
+            response = bookingRepository.findBookingByItem_Owner_IdIsAndStartDateBeforeAndEndDateAfterOrderByStartDateDesc(
                     userId, LocalDateTime.now(), LocalDateTime.now()
             );
         }
 
         if (Status.FUTURE.name().equals(state)) {
 
-            response = bookingRepository.findBookingByItem_Owner_IdIsAndStartDateAfterOrderByStartDate(
+            response = bookingRepository.findBookingByItem_Owner_IdIsAndStartDateAfterOrderByStartDateDesc(
                     userId, LocalDateTime.now()
             );
+
         }
 
-        if (Arrays.asList(Status.values()).contains(Status.valueOf(state))) {
+        if (response == null && Arrays.stream(Status.values()).anyMatch(status -> status.name().equals(state))) {
 
-            response = bookingRepository.findBookingByItem_Owner_IdIsAndStatusIsOrderByStartDate(
+            response = bookingRepository.findBookingByItem_Owner_IdIsAndStatusIsOrderByStartDateDesc(
                     userId, Status.valueOf(state)
             );
         }
 
         if (response == null) {
-            throw new EntityNotFoundException("Не удалось найти бронирование по выбранным критериям.");
+            throw new BadInputParametersException("Unknown state: UNSUPPORTED_STATUS");
         }
 
         return response

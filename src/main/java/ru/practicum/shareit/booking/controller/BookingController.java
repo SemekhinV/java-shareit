@@ -39,14 +39,14 @@ public class BookingController {
     @PatchMapping("/{bookingId}")
     public BookingAllFieldsDto approveBooking(
             @RequestHeader(value = "X-Sharer-User-Id", required = false) Long userId,
-            @RequestParam(required = false) boolean approve,
+            @RequestParam(required = false) boolean approved,
             @PathVariable Long bookingId) {
 
-        return bookingService.approveBooking(userId, bookingId, approve);
+        return bookingService.approveBooking(userId, bookingId, approved);
     }
 
-    @GetMapping("/owner")
-    public List<BookingAllFieldsDto> getAllUserBooking(
+    @GetMapping()
+    public List<BookingAllFieldsDto> getAllBookingsOfCurrentUser(
             @RequestHeader(value = "X-Sharer-User-Id", required = false) Long userId,
             @RequestParam(required = false) String state
     ) {
@@ -54,13 +54,12 @@ public class BookingController {
         return bookingService.getAllBookingsOfCurrentUser(userId, state);
     }
 
-    @GetMapping()
-    public List<BookingAllFieldsDto> getUserItemsBookings(
+    @GetMapping("/owner")
+    public List<BookingAllFieldsDto> getAllUserItemsBookings(
             @RequestHeader(value = "X-Sharer-User-Id", required = false) Long userId,
             @RequestParam(required = false) String state
     ) {
 
-        return bookingService.getAllUserItemsBooking(userId, state);
+        return bookingService.getAllUserItemsBookings(userId, state);
     }
-
 }
