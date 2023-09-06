@@ -2,6 +2,7 @@ package ru.practicum.shareit.item.service;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.booking.dto.BookingAllFieldsDto;
 import ru.practicum.shareit.booking.service.BookingService;
@@ -17,7 +18,9 @@ import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.mapper.ItemMapper;
 import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.request.dto.ItemRequestDto;
 import ru.practicum.shareit.request.model.ItemRequest;
+import ru.practicum.shareit.tools.PageRequestImpl;
 import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.service.UserService;
@@ -79,39 +82,6 @@ public class ItemServiceImpl implements ItemService{
 
     @Override
     @Transactional
-    public List<ItemDto> getAllUsersItems(Long userId) {
-
-        if (userId == null) {
-            throw new BadInputParametersException("Переданы пустые для значения поиска.");
-        }
-
-        userService.getUser(userId);
-
-        List<Item> userItems = itemRepository.findAllByOwner_IdIs(userId);
-
-        //Можем смотреть тк хозяин вещи
-        Map<Long, List<BookingAllFieldsDto>> bookings = bookingService
-                .getAllUserItemsBookings(userId, null)
-                .stream()
-                .collect(Collectors.groupingBy(bookingAllFieldsDto -> bookingAllFieldsDto.getItem().getId()));
-
-        Map<Long, List<CommentDto>> comments = getAllComments()
-                .stream()
-                .collect(Collectors.groupingBy(CommentDto::getItemId));
-
-        return userItems
-                .stream()
-                .map(item -> ItemMapper.mapToItemDtoWithBookingAndComment(
-                        item,
-                        getLastBooking(bookings.get(item.getId())),
-                        getFutureBooking(bookings.get(item.getId())),
-                        comments.get(item.getId())
-                ))
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    @Transactional
     public ItemDtoWithBookingAndComment getItem(Long itemId, Long userId) {
 
         if (itemId == null || userId == null) {throw new BadInputParametersException("Указан неверный id вещи.");}
@@ -134,7 +104,7 @@ public class ItemServiceImpl implements ItemService{
 
     @Override
     @Transactional
-    public ItemDto addItem(Long userId, ItemDto itemDto) {
+    public ItemDto addItem(Long userId, ItemDto itemDto, ItemRequestDto itemRequest) {
 
         isAddValid(userId, itemDto);
 
@@ -189,15 +159,73 @@ public class ItemServiceImpl implements ItemService{
         itemRepository.delete(item);
     }
 
+    @Override
+    @Transactional
+    public List<ItemDto> getAllUsersItems(Long userId, Integer from, Integer size) {
+
+        if (userId == null) {
+            throw new BadInputParametersException("Переданы пустые для значения поиска.");
+        }
+
+        userService.getUser(userId);
+
+        List<Item> userItems;
+
+        var page = PageRequestImpl.of(from, size, Sort.by("created").descending());
+
+        if (page == null) {
+
+            userItems = itemRepository.findAllByOwner_IdIs(userId);
+        } else {
+
+            userItems = itemRepository.findAllByOwner_IdIs(userId, page);
+        }
+
+        return getAllBookingsAndComments(userId, userItems);
+    }
+
+    private List<ItemDto> getAllBookingsAndComments(Long userId, List<Item> userItems) {
+
+        Map<Long, List<BookingAllFieldsDto>> bookings = bookingService
+                .getAllUserItemsBookings(userId, null, null, null)
+                .stream()
+                .collect(Collectors.groupingBy(bookingAllFieldsDto -> bookingAllFieldsDto.getItem().getId()));
+
+        Map<Long, List<CommentDto>> comments = getAllComments()
+                .stream()
+                .collect(Collectors.groupingBy(CommentDto::getItemId));
+
+        return userItems
+                .stream()
+                .map(item -> ItemMapper.mapToItemDtoWithBookingAndComment(
+                        item,
+                        getLastBooking(bookings.get(item.getId())),
+                        getFutureBooking(bookings.get(item.getId())),
+                        comments.get(item.getId())
+                ))
+                .collect(Collectors.toList());
+    }
 
 
     @Override
     @Transactional
-    public List<ItemDto> searchForItems(Long userId, String text) {
+    public List<ItemDto> searchForItems(Long userId, String text, Integer from, Integer size) {
 
         if (text.isBlank()) {return List.of();}
 
         isSearchValid(userId);
+
+        List<Item> items;
+
+        var page = PageRequestImpl.of(from, size, Sort.by("created").descending());
+
+        if (page == null) {
+
+            items = itemRepository.searchForItems(text);
+        } else {
+
+            items = itemRepository.searchForItems(text, page);
+        }
 
         return itemRepository
                 .searchForItems(text)
@@ -218,7 +246,7 @@ public class ItemServiceImpl implements ItemService{
                 () -> {throw new EntityNotFoundException("Вещь с id = " + itemId + " не найдена.");}
         );
 
-        List<BookingAllFieldsDto> bookings = bookingService.getAllBookingsOfCurrentUser(userId, "PAST");
+        List<BookingAllFieldsDto> bookings = bookingService.getAllBookingsOfCurrentUser(userId, "PAST", null, null);
 
         //Проверка на взятие именно этой вещи в аренду пользователем
         if (bookings.isEmpty() ||

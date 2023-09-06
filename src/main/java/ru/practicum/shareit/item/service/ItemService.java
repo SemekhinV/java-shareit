@@ -4,23 +4,26 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemDtoWithBookingAndComment;
+import ru.practicum.shareit.request.dto.ItemRequestDto;
 import ru.practicum.shareit.request.model.ItemRequest;
 
 import java.util.List;
 
 public interface ItemService {
 
+    @Transactional
+    List<ItemDto> getAllUsersItems(Long userId, Integer from, Integer size);
+
     ItemDtoWithBookingAndComment getItem(Long id, Long userId);
 
-    ItemDto addItem(Long userId, ItemDto item);
+    ItemDto addItem(Long userId, ItemDto item, ItemRequestDto itemRequestDto);
 
     ItemDto updateItem(ItemDto item, Long userId);
 
     void deleteItem(Long itemId);
 
-    List<ItemDto> getAllUsersItems(Long userId);
-
-    List<ItemDto> searchForItems(Long userId, String text);
+    @Transactional
+    List<ItemDto> searchForItems(Long userId, String text, Integer from, Integer size);
 
     CommentDto addComment(CommentDto commentDto, Long itemId, Long userId);
 

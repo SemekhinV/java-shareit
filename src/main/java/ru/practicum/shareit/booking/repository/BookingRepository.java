@@ -1,5 +1,6 @@
 package ru.practicum.shareit.booking.repository;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -30,22 +31,30 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     //ALL
     List<Booking> findBookingsByBooker_IdIsOrderByStartDateDesc(Long booker_id);
+    List<Booking> findBookingsByBooker_IdIsOrderByStartDateDesc(Long booker_id, Pageable pageable);
 
     //PAST
     List<Booking> findBookingByBooker_IdIsAndEndDateBeforeOrderByStartDateDesc(
             Long booker_id, LocalDateTime endDate);
+    List<Booking> findBookingByBooker_IdIsAndEndDateBeforeOrderByStartDateDesc(
+            Long booker_id, LocalDateTime endDate, Pageable pageable);
 
     //CURRENT
     List<Booking> findBookingByBooker_IdIsAndStartDateBeforeAndEndDateAfterOrderByStartDateDesc(
             Long booker_id, LocalDateTime startDate, LocalDateTime endDate);
+    List<Booking> findBookingByBooker_IdIsAndStartDateBeforeAndEndDateAfterOrderByStartDateDesc(
+            Long booker_id, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
 
     //FUTURE
-    List<Booking> findBookingByBooker_IdIsAndStartDateAfterOrderByStartDateDesc(Long booker_id, LocalDateTime startDate);
+    List<Booking> findBookingByBooker_IdIsAndStartDateAfterOrderByStartDateDesc(
+            Long booker_id, LocalDateTime startDate);
+    List<Booking> findBookingByBooker_IdIsAndStartDateAfterOrderByStartDateDesc(
+            Long booker_id, LocalDateTime startDate, Pageable pageable);
 
     //Для статусов WAITING/REJECTED
     List<Booking> findBookingByBooker_IdIsAndStatusIsOrderByStartDateDesc(Long booker_id, Status status);
 
-    //Для статусов WAITING?/REJECT, но при поиске бронирований вещей для пользователя
+    //Для статусов WAITING/REJECT, но при поиске бронирований вещей для пользователя
     List<Booking> findBookingByItem_Owner_IdIsAndStatusIsOrderByStartDateDesc(Long owner_id, Status status);
 
     //PAST
@@ -71,4 +80,5 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     //Для All запроса в методе с owner
     List<Booking> findAllByItem_Owner_IdIsOrderByStartDateDesc(Long owner_id);
+    List<Booking> findAllByItem_Owner_IdIsOrderByStartDateDesc(Long owner_id, Pageable pageable);
 }

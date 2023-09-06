@@ -1,6 +1,7 @@
 package ru.practicum.shareit.booking.service;
 
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.dto.BookingAllFieldsDto;
@@ -13,6 +14,7 @@ import ru.practicum.shareit.exception.validation.*;
 import ru.practicum.shareit.item.dto.ItemDtoWithBookingAndComment;
 import ru.practicum.shareit.item.mapper.ItemMapper;
 import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.tools.PageRequestImpl;
 import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.service.UserService;
@@ -163,36 +165,74 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public List<BookingAllFieldsDto> getAllBookingsOfCurrentUser(Long userId, String state) {
+    public List<BookingAllFieldsDto> getAllBookingsOfCurrentUser(Long userId, String state, Integer from, Integer size) {
 
         if (userId == null) {throw new BadInputParametersException("Передан пустой параметр.");}
 
         userService.getUser(userId);
 
+        var page = PageRequestImpl.of(size, from, Sort.by("created").descending());
+
         List<Booking> response = null;
 
         if (Status.ALL.name().equals(state) || state == null) {
 
-            return bookingRepository.findBookingsByBooker_IdIsOrderByStartDateDesc(userId)
-                    .stream()
-                    .map(BookingMapper::toAllFieldsDto)
-                    .collect(Collectors.toList());
+            if (page != null) {
+
+                return bookingRepository.findBookingsByBooker_IdIsOrderByStartDateDesc(userId, page)
+                        .stream()
+                        .map(BookingMapper::toAllFieldsDto)
+                        .collect(Collectors.toList());
+
+            } else {
+
+                return bookingRepository.findBookingsByBooker_IdIsOrderByStartDateDesc(userId)
+                        .stream()
+                        .map(BookingMapper::toAllFieldsDto)
+                        .collect(Collectors.toList());
+            }
+
         }
 
         if (Status.PAST.name().equals(state)) {
-            response = bookingRepository.findBookingByBooker_IdIsAndEndDateBeforeOrderByStartDateDesc
-                    (userId, LocalDateTime.now());
+
+            if (page != null) {
+
+                response = bookingRepository.findBookingByBooker_IdIsAndEndDateBeforeOrderByStartDateDesc
+                        (userId, LocalDateTime.now(), page);
+            } else {
+
+                response = bookingRepository.findBookingByBooker_IdIsAndEndDateBeforeOrderByStartDateDesc
+                        (userId, LocalDateTime.now());
+            }
         }
 
         if (Status.CURRENT.name().equals(state)) {
-            response = bookingRepository
-                    .findBookingByBooker_IdIsAndStartDateBeforeAndEndDateAfterOrderByStartDateDesc
-                            (userId, LocalDateTime.now(), LocalDateTime.now());
+
+            if (page != null) {
+
+                response = bookingRepository
+                        .findBookingByBooker_IdIsAndStartDateBeforeAndEndDateAfterOrderByStartDateDesc
+                                (userId, LocalDateTime.now(), LocalDateTime.now(), page);
+            } else {
+
+                response = bookingRepository
+                        .findBookingByBooker_IdIsAndStartDateBeforeAndEndDateAfterOrderByStartDateDesc
+                                (userId, LocalDateTime.now(), LocalDateTime.now());
+            }
         }
 
         if (Status.FUTURE.name().equals(state)) {
-            response = bookingRepository.findBookingByBooker_IdIsAndStartDateAfterOrderByStartDateDesc
-                    (userId, LocalDateTime.now());
+
+            if (page != null) {
+
+                response = bookingRepository.findBookingByBooker_IdIsAndStartDateAfterOrderByStartDateDesc
+                        (userId, LocalDateTime.now(), page);
+            } else {
+
+                response = bookingRepository.findBookingByBooker_IdIsAndStartDateAfterOrderByStartDateDesc
+                        (userId, LocalDateTime.now());
+            }
         }
 
         //Использовать метод .contains() не получилось, тк нет возможности нормально обработать ситуацию с
@@ -215,30 +255,57 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public List<BookingAllFieldsDto> getAllUserItemsBookings(Long userId, String state) {
+    public List<BookingAllFieldsDto> getAllUserItemsBookings(Long userId, String state, Integer from, Integer size) {
 
         if (userId == null) {throw new BadInputParametersException("Передано пустое значение.");}
 
         userService.getUser(userId);
 
+        var page = PageRequestImpl.of(size, from, Sort.by("created").descending());
+
         List<Booking> response = null;
 
         if (Status.ALL.name().equals(state) || state == null) {
 
-           return bookingRepository.findAllByItem_Owner_IdIsOrderByStartDateDesc(userId)
-                   .stream()
-                   .map(BookingMapper::toAllFieldsDto)
-                   .collect(Collectors.toList());
+            if (page != null) {
+
+                return bookingRepository.findAllByItem_Owner_IdIsOrderByStartDateDesc(userId, page)
+                        .stream()
+                        .map(BookingMapper::toAllFieldsDto)
+                        .collect(Collectors.toList());
+            } else {
+
+                return bookingRepository.findAllByItem_Owner_IdIsOrderByStartDateDesc(userId)
+                        .stream()
+                        .map(BookingMapper::toAllFieldsDto)
+                        .collect(Collectors.toList());
+            }
         }
 
         if (Status.PAST.name().equals(state)) {
 
-            response = bookingRepository.findBookingByItem_Owner_IdIsAndEndDateBeforeOrderByStartDateDesc(
-                    userId, LocalDateTime.now()
-            );
+            if (page != null) {
+
+                response = bookingRepository.findBookingByItem_Owner_IdIsAndEndDateBeforeOrderByStartDateDesc(
+                        userId, LocalDateTime.now()
+                );
+            } else {
+
+                response = bookingRepository.findBookingByItem_Owner_IdIsAndEndDateBeforeOrderByStartDateDesc(
+                        userId, LocalDateTime.now()
+                );
+            }
+
+
         }
 
         if (Status.CURRENT.name().equals(state)) {
+
+            if (page != null) {
+
+            } else {
+
+            }
 
             response = bookingRepository.findBookingByItem_Owner_IdIsAndStartDateBeforeAndEndDateAfterOrderByStartDateDesc(
                     userId, LocalDateTime.now(), LocalDateTime.now()
@@ -246,6 +313,12 @@ public class BookingServiceImpl implements BookingService {
         }
 
         if (Status.FUTURE.name().equals(state)) {
+
+            if (page != null) {
+
+            } else {
+
+            }
 
             response = bookingRepository.findBookingByItem_Owner_IdIsAndStartDateAfterOrderByStartDateDesc(
                     userId, LocalDateTime.now()

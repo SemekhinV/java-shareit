@@ -26,7 +26,9 @@ public class ItemDtoWithBookingAndComment extends ItemDto{
                                         BookingDto lastBooking,
                                         BookingDto nextBooking,
                                         List<CommentDto> comments) {
+
         super(id, name, description, available, userId, requestId);
+
         this.lastBooking = lastBooking;
         this.nextBooking = nextBooking;
         this.comments = comments;

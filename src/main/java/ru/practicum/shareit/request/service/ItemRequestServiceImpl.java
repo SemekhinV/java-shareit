@@ -2,6 +2,8 @@ package ru.practicum.shareit.request.service;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exception.validation.BadInputParametersException;
 import ru.practicum.shareit.exception.validation.EntityNotFoundException;
@@ -14,6 +16,8 @@ import ru.practicum.shareit.request.repository.ItemRequestRepository;
 import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.service.UserService;
+import ru.practicum.shareit.tools.*;
+
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -79,7 +83,7 @@ public class ItemRequestServiceImpl implements ItemRequestService {
     }
 
     @Override
-    public List<ItemRequestDto> getAllItemRequests(Long userId) {
+    public List<ItemRequestDto> getAllItemRequests(Long userId, Integer from, Integer size) {
 
         if (userId == null) {
             throw new BadInputParametersException("передано пустое значение.");
@@ -87,7 +91,17 @@ public class ItemRequestServiceImpl implements ItemRequestService {
 
         userService.getUser(userId);
 
-        List<ItemRequest> itemRequests = requestRepository.findItemRequestsByRequester_IdIsOrderByCreatedDesc(userId);
+        List<ItemRequest> itemRequests;
+
+        var page = PageRequestImpl.of(from, size, Sort.by("created").descending());
+
+        if (page == null) {
+
+            itemRequests = requestRepository.findItemRequestsByRequester_IdIsOrderByCreatedDesc(userId);
+        } else {
+
+            itemRequests = requestRepository.findItemRequestsByRequester_IdIsOrderByCreatedDesc(userId, page);
+        }
 
         Map<Long,List<ItemDto>> items = itemService.findItemsByRequestsList(itemRequests)
                 .stream()
