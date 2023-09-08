@@ -35,6 +35,10 @@ public class BookingServiceImpl implements BookingService {
 
     private void isValid(BookingFromRequestDto booking) {
 
+        if (booking.getStart() == null || booking.getEnd() == null) {
+            throw new InvalidValueException("Передано пустое значения даты.");
+        }
+
         if (booking.getStart().isBefore(LocalDateTime.now())) {
             throw new InvalidValueException("Дата старта аренды не может быть в прошлом.");
         }
@@ -153,7 +157,7 @@ public class BookingServiceImpl implements BookingService {
     public List<BookingAllFieldsDto> getBookingsByItemId(Long itemId, Long userId) {
 
         return bookingRepository
-                .findBookingsByItem_IdAndItem_Owner_IdIsOrderByStartDate(itemId, userId)
+                .findBookingsByItem_IdAndItem_Owner_IdIsAndStatusIsOrderByStartDate(itemId, userId, Status.APPROVED)
                 .stream()
                 .map(BookingMapper::toAllFieldsDto)
                 .collect(Collectors.toList());
@@ -220,7 +224,7 @@ public class BookingServiceImpl implements BookingService {
 
         userService.getUser(userId);
 
-        var page = PageRequestImpl.of(size, from, Sort.by("startDate").descending());
+        var page = PageRequestImpl.of(from, size, Sort.by("startDate").descending());
 
         List<Booking> response = null;
 
@@ -373,7 +377,7 @@ public class BookingServiceImpl implements BookingService {
 
         userService.getUser(userId);
 
-        var page = PageRequestImpl.of(size, from, Sort.by("startDate").descending());
+        var page = PageRequestImpl.of(from, size, Sort.by("startDate").descending());
 
         List<Booking> response = null;
 

@@ -233,8 +233,7 @@ public class ItemServiceImpl implements ItemService{
             items = itemRepository.searchForItems(text, page);
         }
 
-        return itemRepository
-                .searchForItems(text)
+        return items
                 .stream()
                 .map(ItemMapper::toItemDto)
                 .collect(Collectors.toList());

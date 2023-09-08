@@ -114,7 +114,7 @@ public class ItemRequestServiceImpl implements ItemRequestService {
 
         List<ItemRequest> itemRequests;
 
-        var page = PageRequestImpl.of(size, from, Sort.by("created").descending());
+        var page = PageRequestImpl.of(from, size, Sort.by("created").descending());
 
         if (page == null) {
 
