@@ -177,7 +177,7 @@ public class ItemServiceImpl implements ItemService{
 
         List<Item> userItems;
 
-        var page = PageRequestImpl.of(from, size, Sort.by("created").descending());
+        var page = PageRequestImpl.of(from, size, Sort.by("id").ascending());
 
         if (page == null) {
 
@@ -223,7 +223,7 @@ public class ItemServiceImpl implements ItemService{
 
         List<Item> items;
 
-        var page = PageRequestImpl.of(from, size, Sort.by("created").descending());
+        var page = PageRequestImpl.of(from, size, Sort.by("id").ascending());
 
         if (page == null) {
 

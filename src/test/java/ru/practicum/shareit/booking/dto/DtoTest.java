@@ -1,4 +1,4 @@
-package ru.practicum.shareit.booking.dtotest;
+package ru.practicum.shareit.booking.dto;
 
 import org.springframework.boot.test.autoconfigure.json.JsonTest;
 import org.springframework.beans.factory.annotation.Autowired;

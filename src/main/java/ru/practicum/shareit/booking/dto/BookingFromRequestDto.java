@@ -15,18 +15,14 @@ import java.time.LocalDateTime;
 public class BookingFromRequestDto {
 
     Long id;
-    @NonNull
+
     LocalDateTime start;
 
-    @NonNull
     LocalDateTime end;
 
-    @NonNull
     Long itemId;
 
-    @NonNull
     Long bookerId;
 
-    @NonNull
     String status;
 }

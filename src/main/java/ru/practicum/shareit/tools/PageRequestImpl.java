@@ -6,7 +6,7 @@ import ru.practicum.shareit.exception.validation.InvalidValueException;
 
 public class PageRequestImpl {
 
-    public static PageRequest of (Integer size, Integer from, Sort sort) {
+    public static PageRequest of (Integer from, Integer size, Sort sort) {
 
         if (size == null || from == null) return null;
         if (size <= 0 || from < 0) throw new InvalidValueException("Переданные значение должны быть больше нуля.");

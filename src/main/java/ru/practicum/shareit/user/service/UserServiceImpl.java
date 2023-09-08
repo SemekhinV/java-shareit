@@ -38,16 +38,6 @@ public class UserServiceImpl implements  UserService{
     }
 
     @Override
-    public List<UserDto> getAll() {
-
-        return userRepository
-                .findAll()
-                .stream()
-                .map(UserMapper::toUserDto)
-                .collect(Collectors.toList());
-    }
-
-    @Override
     @Transactional
     public UserDto addUser(UserDto user) {
 
@@ -119,5 +109,15 @@ public class UserServiceImpl implements  UserService{
         } catch (OptimisticLockingFailureException e) {
             throw new EntityNotFoundException("Ошибка удаления, сущность с id = " + id + " не найдена.");
         }
+    }
+
+    @Override
+    public List<UserDto> getAll() {
+
+        return userRepository
+                .findAll()
+                .stream()
+                .map(UserMapper::toUserDto)
+                .collect(Collectors.toList());
     }
 }
