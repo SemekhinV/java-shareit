@@ -26,7 +26,7 @@ public class ItemController {
             @RequestHeader(value = "X-Sharer-User-Id", required = false) Long userId) {
 
         ItemRequestDto itemRequest = (item.getRequestId() != null) ?
-                requestService.getItemRequestById(item.getUserId(), item.getRequestId()) : null;
+                requestService.getItemRequestById(userId, item.getRequestId()) : null;
 
         return itemService.addItem(userId, item, itemRequest);
     }

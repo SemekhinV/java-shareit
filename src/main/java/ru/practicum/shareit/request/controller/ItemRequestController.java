@@ -33,6 +33,14 @@ public class ItemRequestController {
     }
 
     @GetMapping()
+    public List<ItemRequestDto> getItemRequests(
+            @RequestHeader(value = "X-Sharer-User-Id", required = false) Long userId
+    ) {
+
+        return requestService.getAllItemRequests(userId);
+    }
+
+    @GetMapping("/all")
     public List<ItemRequestDto> getAllItemRequests(
             @RequestHeader(value = "X-Sharer-User-Id", required = false) Long userId,
             @RequestParam(required = false) Integer from,

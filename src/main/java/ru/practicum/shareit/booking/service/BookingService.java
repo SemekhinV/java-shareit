@@ -15,7 +15,11 @@ public interface BookingService {
 
     BookingAllFieldsDto approveBooking(Long userId, Long bookingId, boolean approve);
 
+    List<BookingAllFieldsDto> getAllBookingsOfCurrentUser(Long userId, String state);
+
     List<BookingAllFieldsDto> getAllBookingsOfCurrentUser(Long userId, String state, Integer from, Integer size);
+
+    List<BookingAllFieldsDto> getAllUserItemsBookings(Long userId, String state);
 
     List<BookingAllFieldsDto> getAllUserItemsBookings(Long userId, String state, Integer from, Integer size);
 }

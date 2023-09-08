@@ -24,6 +24,7 @@ import ru.practicum.shareit.tools.PageRequestImpl;
 import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.service.UserService;
+import ru.practicum.shareit.request.mapper.ItemRequestMapper;
 
 import org.springframework.transaction.annotation.Transactional;
 
@@ -109,10 +110,15 @@ public class ItemServiceImpl implements ItemService{
         isAddValid(userId, itemDto);
 
         User user = UserMapper.toUser(userService.getUser(userId));
-
         Item item = ItemMapper.toItem(itemDto);
 
         item.setOwner(user);
+
+        if (itemRequest != null) {
+
+            item.setRequest(ItemRequestMapper.toRequest(
+                    itemRequest, userService.getUser(itemRequest.getUserId())));
+        }
 
         Item fromDb = itemRepository.save(item);
 

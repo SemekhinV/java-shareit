@@ -11,6 +11,6 @@ public class PageRequestImpl {
         if (size == null || from == null) return null;
         if (size <= 0 || from < 0) throw new InvalidValueException("Переданные значение должны быть больше нуля.");
 
-        return PageRequest.of(from, size, sort); //from/size ?
+        return PageRequest.of(from/size, size, sort);
     }
 }

@@ -1,4 +1,4 @@
-package ru.practicum.shareit.booking.repository;
+package ru.practicum.shareit.booking.dtotest;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -42,7 +42,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     //CURRENT
     List<Booking> findBookingByBooker_IdIsAndStartDateBeforeAndEndDateAfterOrderByStartDateDesc(
             Long booker_id, LocalDateTime startDate, LocalDateTime endDate);
-    List<Booking> findBookingByBooker_IdIsAndStartDateBeforeAndEndDateAfterOrderByStartDateDesc(
+    List<Booking> findBookingByBooker_IdIsAndStartDateBeforeAndEndDateAfter(
             Long booker_id, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
 
     //FUTURE
@@ -53,30 +53,34 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     //Для статусов WAITING/REJECTED
     List<Booking> findBookingByBooker_IdIsAndStatusIsOrderByStartDateDesc(Long booker_id, Status status);
+    List<Booking> findBookingByBooker_IdIsAndStatusIsOrderByStartDateDesc(
+            Long booker_id, Status status, Pageable pageable);
 
     //Для статусов WAITING/REJECT, но при поиске бронирований вещей для пользователя
     List<Booking> findBookingByItem_Owner_IdIsAndStatusIsOrderByStartDateDesc(Long owner_id, Status status);
+    List<Booking> findBookingByItem_Owner_IdIsAndStatusIsOrderByStartDateDesc(
+            Long owner_id, Status status, Pageable pageable);
 
     //PAST
     List<Booking> findBookingByItem_Owner_IdIsAndEndDateBeforeOrderByStartDateDesc(Long owner_id, LocalDateTime endDate);
+    List<Booking> findBookingByItem_Owner_IdIsAndEndDateBeforeOrderByStartDateDesc(
+            Long owner_id, LocalDateTime endDate, Pageable pageable);
 
     //CURRENT
     List<Booking> findBookingByItem_Owner_IdIsAndStartDateBeforeAndEndDateAfterOrderByStartDateDesc(
             Long owner_id, LocalDateTime starDate, LocalDateTime endDate
     );
+    List<Booking> findBookingByItem_Owner_IdIsAndStartDateBeforeAndEndDateAfterOrderByStartDateDesc(
+            Long owner_id, LocalDateTime starDate, LocalDateTime endDate, Pageable pageable
+    );
 
     //FUTURE
     List<Booking> findBookingByItem_Owner_IdIsAndStartDateAfterOrderByStartDateDesc(Long owner_id, LocalDateTime starDate);
+    List<Booking> findBookingByItem_Owner_IdIsAndStartDateAfterOrderByStartDateDesc(
+            Long owner_id, LocalDateTime starDate, Pageable pageable);
 
     //Для get запроса вещи
-    @Query(
-            "select b from Booking b " +
-                    "where b.item.id = ?1 " +
-                    "and b.item.owner.id = ?2 " +
-                    "and b.status = 'APPROVED' " +
-                    "order by b.startDate"
-    )
-    List<Booking> findBookingsForItemGerRequest(Long item_id, Long owner_id);
+    List<Booking> findBookingsByItem_IdAndItem_Owner_IdIsOrderByStartDate(Long item_id, Long owner_id);
 
     //Для All запроса в методе с owner
     List<Booking> findAllByItem_Owner_IdIsOrderByStartDateDesc(Long owner_id);
