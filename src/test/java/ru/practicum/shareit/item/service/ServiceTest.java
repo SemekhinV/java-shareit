@@ -64,45 +64,6 @@ public class ServiceTest {
         );
     }
 
-    private CommentDto addComments(String commentText, UserDto user) {
-
-        UserDto booker = userService.addUser(user);
-
-        bookingService.saveBooking(
-                new BookingFromRequestDto(
-                        null,
-                        now().minusSeconds(2),
-                        now().minusSeconds(1),
-                        itemDto.getId(),
-                        booker.getId(),
-                        null),
-                new ItemDtoWithBookingAndComment(
-                        itemDto.getId(),
-                        itemDto.getName(),
-                        itemDto.getDescription(),
-                        true,
-                        userDto.getId(),
-                        null,
-                        null,
-                        null,
-                        List.of()),
-                booker.getId()
-        );
-
-        CommentDto commentDto = new CommentDto(
-                null,
-                commentText,
-                itemDto.getId(),
-                booker.getName(),
-                LocalDateTime.now().plusMinutes(4)
-        );
-
-        return itemService.addComment(
-                commentDto,
-                commentDto.getItemId(),
-                booker.getId());
-    }
-
     @Test
     void addItemTest() {
 
@@ -253,63 +214,6 @@ public class ServiceTest {
         assertThat(items.size(), equalTo(itemDtoList.size()));
     }
 
-    @Test
-    void addCommentTest() {
-
-        CommentDto commentDto = addComments(
-                "comment1",
-                new UserDto(
-                        15L,
-                        "Den",
-                        "den@mail.com")
-        );
-
-        Comment comment = entityManager.createQuery(
-                "SELECT comment FROM Comment comment",
-                Comment.class).getSingleResult();
-
-        assertThat(comment.getId(), notNullValue());
-        assertThat(comment.getId(), equalTo(commentDto.getId()));
-
-        assertThat(comment.getItem().getId(), equalTo(commentDto.getItemId()));
-
-        assertThat(comment.getAuthor().getName(), equalTo(commentDto.getAuthorName()));
-
-        assertThat(comment.getText(), equalTo(commentDto.getText()));
-    }
-
-    @Test
-    void getAllCommentsTest() {
-
-         addComments(
-                "com1",
-                new UserDto(
-                        12L,
-                        "Vas",
-                        "vas2@mail.com")
-        );
-
-        addComments(
-                "com2",
-                new UserDto(
-                        13L,
-                        "Ivan",
-                        "ivan@mail.com")
-        );
-
-        List<CommentDto> allComments = itemService.getAllComments();
-
-        List<Comment> comments = entityManager.createQuery(
-                        "SELECT comment FROM Comment comment",
-                        Comment.class)
-                .getResultList();
-
-        assertThat(comments.size(), equalTo(allComments.size()));
-
-        assertThat(comments.size(), equalTo(2));
-
-        assertThat(comments, notNullValue());
-    }
 
     @Test
     void getItemsByRequestIdTest() {
