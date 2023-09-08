@@ -157,8 +157,9 @@ public class BookingServiceImpl implements BookingService {
     public List<BookingAllFieldsDto> getBookingsByItemId(Long itemId, Long userId) {
 
         return bookingRepository
-                .findBookingsByItem_IdAndItem_Owner_IdIsAndStatusIsOrderByStartDate(itemId, userId, Status.APPROVED)
+                .findBookingsByItem_IdAndItem_Owner_IdIsOrderByStartDate(itemId, userId)
                 .stream()
+                .filter(booking -> !booking.getStatus().equals(Status.REJECTED))
                 .map(BookingMapper::toAllFieldsDto)
                 .collect(Collectors.toList());
     }

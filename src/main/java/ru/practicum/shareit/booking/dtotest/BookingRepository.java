@@ -80,13 +80,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             Long owner_id, LocalDateTime starDate, Pageable pageable);
 
     //Для get запроса вещи
-//    @Query(
-//            "SELECT booking FROM Booking booking" +
-//                    "WHERE booking.item.id = ?1 AND booking.booker.id = ?2 " +
-//                    "AND booking.status = APPROVED"
-//    )
-    List<Booking> findBookingsByItem_IdAndItem_Owner_IdIsAndStatusIsOrderByStartDate(
-            Long item_id, Long owner_id, Status status);
+    List<Booking> findBookingsByItem_IdAndItem_Owner_IdIsOrderByStartDate(Long item_id, Long owner_id);
 
     //Для All запроса в методе с owner
     List<Booking> findAllByItem_Owner_IdIsOrderByStartDateDesc(Long owner_id);

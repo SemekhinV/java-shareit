@@ -85,7 +85,7 @@ public class ServiceTest {
                 .end(now().plusMinutes(40))
                 .itemId(1L)
                 .bookerId(1L)
-                .status(WAITING.name())
+                .status(APPROVED.name())
                 .build();
 
         bookingAllFieldsDto = bookingService.saveBooking(
@@ -142,8 +142,8 @@ public class ServiceTest {
                                 "JOIN booking.item item " +
                                 "WHERE item.owner.id = :ownerId AND item.id = :itemId",
                         Booking.class)
-                .setParameter("itemId", itemDto.getId())
                 .setParameter("ownerId", owner.getId())
+                .setParameter("itemId", itemDto.getId())
                 .getResultList();
 
         assertThat(bookingsFrom.get(0).getId(), equalTo(bookings.get(0).getId()));
