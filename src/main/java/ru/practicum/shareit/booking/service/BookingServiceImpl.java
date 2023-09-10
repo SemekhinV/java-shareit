@@ -1,20 +1,21 @@
 package ru.practicum.shareit.booking.service;
 
 import lombok.AllArgsConstructor;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.dto.BookingAllFieldsDto;
 import ru.practicum.shareit.booking.dto.BookingFromRequestDto;
 import ru.practicum.shareit.booking.mapper.BookingMapper;
 import ru.practicum.shareit.booking.model.Booking;
-import ru.practicum.shareit.booking.dtotest.BookingRepository;
+import ru.practicum.shareit.booking.repository.BookingRepository;
 import ru.practicum.shareit.booking.status.Status;
-import ru.practicum.shareit.exception.validation.*;
+import ru.practicum.shareit.exception.validation.BadInputParametersException;
+import ru.practicum.shareit.exception.validation.EntityNotFoundException;
+import ru.practicum.shareit.exception.validation.InvalidValueException;
 import ru.practicum.shareit.item.dto.ItemDtoWithBookingAndComment;
 import ru.practicum.shareit.item.mapper.ItemMapper;
 import ru.practicum.shareit.item.model.Item;
-import ru.practicum.shareit.tools.PageRequestImpl;
 import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.service.UserService;
@@ -64,8 +65,6 @@ public class BookingServiceImpl implements BookingService {
             ItemDtoWithBookingAndComment itemDto,
             Long userId
     ) {
-
-        if (userId == null) {throw new BadInputParametersException("Передано пустое id пользователя.");}
 
         if (itemDto.getUserId().equals(userId)) {
             throw new EntityNotFoundException("Хозяин не может арендовать собственную вещь.");
@@ -157,8 +156,9 @@ public class BookingServiceImpl implements BookingService {
     public List<BookingAllFieldsDto> getBookingsByItemId(Long itemId, Long userId) {
 
         return bookingRepository
-                .findBookingsByItem_IdAndItem_Owner_IdIsAndStatusIsOrderByStartDate(itemId, userId, Status.APPROVED)
+                .findBookingsByItemIdAndItemOwnerIdIsOrderByStartDate(itemId, userId)
                 .stream()
+                .filter(booking -> !booking.getStatus().equals(Status.REJECTED))
                 .map(BookingMapper::toAllFieldsDto)
                 .collect(Collectors.toList());
     }
@@ -166,15 +166,13 @@ public class BookingServiceImpl implements BookingService {
     @Override
     public List<BookingAllFieldsDto> getAllBookingsOfCurrentUser(Long userId, String state) {
 
-        if (userId == null) {throw new BadInputParametersException("Передан пустой параметр.");}
-
         userService.getUser(userId);
 
         List<Booking> response = null;
 
         if (Status.ALL.name().equals(state) || state == null) {
 
-            return bookingRepository.findBookingsByBooker_IdIsOrderByStartDateDesc(userId)
+            return bookingRepository.findBookingsByBookerIdIsOrderByStartDateDesc(userId)
                     .stream()
                     .map(BookingMapper::toAllFieldsDto)
                     .collect(Collectors.toList());
@@ -182,29 +180,29 @@ public class BookingServiceImpl implements BookingService {
 
         if (Status.PAST.name().equals(state)) {
 
-            response = bookingRepository.findBookingByBooker_IdIsAndEndDateBeforeOrderByStartDateDesc
-                        (userId, LocalDateTime.now());
+            response = bookingRepository.findBookingByBookerIdIsAndEndDateBeforeOrderByStartDateDesc
+                    (userId, LocalDateTime.now());
         }
 
         if (Status.CURRENT.name().equals(state)) {
 
             response = bookingRepository
-                        .findBookingByBooker_IdIsAndStartDateBeforeAndEndDateAfterOrderByStartDateDesc
-                                (userId, LocalDateTime.now(), LocalDateTime.now());
+                    .findBookingByBookerIdIsAndStartDateBeforeAndEndDateAfterOrderByStartDateDesc
+                            (userId, LocalDateTime.now(), LocalDateTime.now());
         }
 
         if (Status.FUTURE.name().equals(state)) {
 
-            response = bookingRepository.findBookingByBooker_IdIsAndStartDateAfterOrderByStartDateDesc
-                        (userId, LocalDateTime.now());
+            response = bookingRepository.findBookingByBookerIdIsAndStartDateAfterOrderByStartDateDesc
+                    (userId, LocalDateTime.now());
         }
 
         //Использовать метод .contains() не получилось, тк нет возможности нормально обработать ситуацию с
         //Неизвестным программе статусом
         if (response == null && Arrays.stream(Status.values()).anyMatch(status -> status.name().equals(state))) {
 
-            response = bookingRepository.findBookingByBooker_IdIsAndStatusIsOrderByStartDateDesc(
-                        userId, Status.valueOf(state));
+            response = bookingRepository.findBookingByBookerIdIsAndStatusIsOrderByStartDateDesc(
+                    userId, Status.valueOf(state));
         }
 
         if (response == null) {
@@ -218,91 +216,46 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public List<BookingAllFieldsDto> getAllBookingsOfCurrentUser(Long userId, String state, Integer from, Integer size) {
-
-        if (userId == null) {throw new BadInputParametersException("Передан пустой параметр.");}
+    public List<BookingAllFieldsDto> getAllBookingsOfCurrentUser(Long userId, String state, Pageable page) {
 
         userService.getUser(userId);
-
-        var page = PageRequestImpl.of(from, size, Sort.by("startDate").descending());
 
         List<Booking> response = null;
 
         if (Status.ALL.name().equals(state) || state == null) {
 
-            if (page != null) {
-
-                return bookingRepository.findBookingsByBooker_IdIsOrderByStartDateDesc(userId, page)
-                        .stream()
-                        .map(BookingMapper::toAllFieldsDto)
-                        .collect(Collectors.toList());
-
-            } else {
-
-                return bookingRepository.findBookingsByBooker_IdIsOrderByStartDateDesc(userId)
-                        .stream()
-                        .map(BookingMapper::toAllFieldsDto)
-                        .collect(Collectors.toList());
-            }
-
+            return bookingRepository.findBookingsByBookerIdIsOrderByStartDateDesc(userId, page)
+                    .stream()
+                    .map(BookingMapper::toAllFieldsDto)
+                    .collect(Collectors.toList());
         }
 
         if (Status.PAST.name().equals(state)) {
 
-            if (page != null) {
-
-                response = bookingRepository.findBookingByBooker_IdIsAndEndDateBeforeOrderByStartDateDesc
-                        (userId, LocalDateTime.now(), page);
-            } else {
-
-                response = bookingRepository.findBookingByBooker_IdIsAndEndDateBeforeOrderByStartDateDesc
-                        (userId, LocalDateTime.now());
-            }
+            response = bookingRepository.findBookingByBookerIdIsAndEndDateBeforeOrderByStartDateDesc
+                    (userId, LocalDateTime.now(), page);
         }
 
         if (Status.CURRENT.name().equals(state)) {
 
-            if (page != null) {
-
-                response = bookingRepository
-                        .findBookingByBooker_IdIsAndStartDateBeforeAndEndDateAfter
-                                (userId, LocalDateTime.now(), LocalDateTime.now(), page);
-            } else {
-
-                response = bookingRepository
-                        .findBookingByBooker_IdIsAndStartDateBeforeAndEndDateAfterOrderByStartDateDesc
-                                (userId, LocalDateTime.now(), LocalDateTime.now());
-            }
+            response = bookingRepository
+                    .findBookingByBookerIdIsAndStartDateBeforeAndEndDateAfter
+                            (userId, LocalDateTime.now(), LocalDateTime.now(), page);
         }
 
         if (Status.FUTURE.name().equals(state)) {
 
-            if (page != null) {
-
-                response = bookingRepository.findBookingByBooker_IdIsAndStartDateAfterOrderByStartDateDesc
-                        (userId, LocalDateTime.now(), page);
-            } else {
-
-                response = bookingRepository.findBookingByBooker_IdIsAndStartDateAfterOrderByStartDateDesc
-                        (userId, LocalDateTime.now());
-            }
+            response = bookingRepository.findBookingByBookerIdIsAndStartDateAfterOrderByStartDateDesc
+                    (userId, LocalDateTime.now(), page);
         }
 
         //Использовать метод .contains() не получилось, тк нет возможности нормально обработать ситуацию с
         //Неизвестным программе статусом
         if (response == null && Arrays.stream(Status.values()).anyMatch(status -> status.name().equals(state))) {
 
-            if (page != null) {
-
-                response = bookingRepository.findBookingByBooker_IdIsAndStatusIsOrderByStartDateDesc(
-                        userId, Status.valueOf(state), page
-                );
-            } else {
-
-                response = bookingRepository.findBookingByBooker_IdIsAndStatusIsOrderByStartDateDesc(
-                        userId, Status.valueOf(state)
-                );
-            }
+            response = bookingRepository.findBookingByBookerIdIsAndStatusIsOrderByStartDateDesc(
+                    userId, Status.valueOf(state), page
+            );
         }
 
         if (response == null) {
@@ -318,46 +271,64 @@ public class BookingServiceImpl implements BookingService {
     @Override
     public List<BookingAllFieldsDto> getAllUserItemsBookings(Long userId, String state) {
 
-        if (userId == null) {throw new BadInputParametersException("Передано пустое значение.");}
-
         userService.getUser(userId);
 
         List<Booking> response = null;
 
-        if (Status.ALL.name().equals(state) || state == null) {
+        try {
 
-            return bookingRepository.findAllByItem_Owner_IdIsOrderByStartDateDesc(userId)
-                    .stream()
-                    .map(BookingMapper::toAllFieldsDto)
-                    .collect(Collectors.toList());
-        }
+            Status status = (state == null) ? Status.ALL : Status.valueOf(state);
 
-        if (Status.PAST.name().equals(state)) {
+            switch (status) {
 
-            response = bookingRepository.findBookingByItem_Owner_IdIsAndEndDateBeforeOrderByStartDateDesc(
-                    userId, LocalDateTime.now()
-            );
-        }
+                case ALL: {
 
-        if (Status.CURRENT.name().equals(state)) {
+                    return bookingRepository.findAllByItemOwnerIdIsOrderByStartDateDesc(userId)
+                            .stream()
+                            .map(BookingMapper::toAllFieldsDto)
+                            .collect(Collectors.toList());
+                }
 
-            response = bookingRepository.findBookingByItem_Owner_IdIsAndStartDateBeforeAndEndDateAfterOrderByStartDateDesc(
-                    userId, LocalDateTime.now(), LocalDateTime.now()
-            );
-        }
+                case PAST: {
 
-        if (Status.FUTURE.name().equals(state)) {
+                    response = bookingRepository.findBookingByItemOwnerIdIsAndEndDateBeforeOrderByStartDateDesc(
+                            userId, LocalDateTime.now()
+                    );
 
-            response = bookingRepository.findBookingByItem_Owner_IdIsAndStartDateAfterOrderByStartDateDesc(
-                    userId, LocalDateTime.now()
-            );
-        }
+                    break;
+                }
 
-        if (response == null && Arrays.stream(Status.values()).anyMatch(status -> status.name().equals(state))) {
+                case CURRENT: {
 
-            response = bookingRepository.findBookingByItem_Owner_IdIsAndStatusIsOrderByStartDateDesc(
-                    userId, Status.valueOf(state)
-            );
+                    response = bookingRepository.findBookingByItemOwnerIdIsAndStartDateBeforeAndEndDateAfterOrderByStartDateDesc(
+                            userId, LocalDateTime.now(), LocalDateTime.now()
+                    );
+
+                    break;
+                }
+
+                case FUTURE: {
+
+                    response = bookingRepository.findBookingByItemOwnerIdIsAndStartDateAfterOrderByStartDateDesc(
+                            userId, LocalDateTime.now()
+                    );
+
+                    break;
+                }
+
+                default: {
+
+                    response = bookingRepository.findBookingByItemOwnerIdIsAndStatusIsOrderByStartDateDesc(
+                            userId, Status.valueOf(state)
+                    );
+
+                    break;
+                }
+            }
+
+        } catch (IllegalArgumentException e) {
+
+            throw new BadInputParametersException("Unknown state: UNSUPPORTED_STATUS");
         }
 
         if (response == null) {
@@ -371,94 +342,67 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public List<BookingAllFieldsDto> getAllUserItemsBookings(Long userId, String state, Integer from, Integer size) {
-
-        if (userId == null) {throw new BadInputParametersException("Передано пустое значение.");}
+    public List<BookingAllFieldsDto> getAllUserItemsBookings(Long userId, String state, Pageable page) {
 
         userService.getUser(userId);
 
-        var page = PageRequestImpl.of(from, size, Sort.by("startDate").descending());
-
         List<Booking> response = null;
 
-        if (Status.ALL.name().equals(state) || state == null) {
+        try {
 
-            if (page != null) {
+            Status status = (state == null) ? Status.ALL : Status.valueOf(state);
 
-                return bookingRepository.findAllByItem_Owner_IdIsOrderByStartDateDesc(userId, page)
-                        .stream()
-                        .map(BookingMapper::toAllFieldsDto)
-                        .collect(Collectors.toList());
-            } else {
+            switch (status) {
 
-                return bookingRepository.findAllByItem_Owner_IdIsOrderByStartDateDesc(userId)
-                        .stream()
-                        .map(BookingMapper::toAllFieldsDto)
-                        .collect(Collectors.toList());
+                case ALL: {
+
+                    return bookingRepository.findAllByItemOwnerIdIsOrderByStartDateDesc(userId, page)
+                            .stream()
+                            .map(BookingMapper::toAllFieldsDto)
+                            .collect(Collectors.toList());
+                }
+
+                case PAST: {
+
+                    response = bookingRepository.findBookingByItemOwnerIdIsAndEndDateBeforeOrderByStartDateDesc(
+                            userId, LocalDateTime.now(), page
+                    );
+
+                    break;
+                }
+
+                case CURRENT: {
+
+                    response = bookingRepository.findBookingByItemOwnerIdIsAndStartDateBeforeAndEndDateAfterOrderByStartDateDesc(
+                            userId, LocalDateTime.now(), LocalDateTime.now(), page
+                    );
+
+                    break;
+                }
+
+                case FUTURE: {
+                    response = bookingRepository.findBookingByItemOwnerIdIsAndStartDateAfterOrderByStartDateDesc(
+                            userId, LocalDateTime.now(), page
+                    );
+
+                    break;
+                }
+
+                default: {
+
+                    response = bookingRepository.findBookingByItemOwnerIdIsAndStatusIsOrderByStartDateDesc(
+                            userId, status, page
+                    );
+
+                    break;
+                }
             }
-        }
 
-        if (Status.PAST.name().equals(state)) {
-
-            if (page != null) {
-
-                response = bookingRepository.findBookingByItem_Owner_IdIsAndEndDateBeforeOrderByStartDateDesc(
-                        userId, LocalDateTime.now(), page
-                );
-            } else {
-
-                response = bookingRepository.findBookingByItem_Owner_IdIsAndEndDateBeforeOrderByStartDateDesc(
-                        userId, LocalDateTime.now()
-                );
+            if (response == null) {
+                throw new BadInputParametersException("Unknown state: UNSUPPORTED_STATUS");
             }
-        }
+        } catch (IllegalArgumentException e) {
 
-        if (Status.CURRENT.name().equals(state)) {
-
-            if (page != null) {
-
-                response = bookingRepository.findBookingByItem_Owner_IdIsAndStartDateBeforeAndEndDateAfterOrderByStartDateDesc(
-                        userId, LocalDateTime.now(), LocalDateTime.now(), page
-                );
-            } else {
-
-                response = bookingRepository.findBookingByItem_Owner_IdIsAndStartDateBeforeAndEndDateAfterOrderByStartDateDesc(
-                        userId, LocalDateTime.now(), LocalDateTime.now()
-                );
-            }
-        }
-
-        if (Status.FUTURE.name().equals(state)) {
-
-            if (page != null) {
-
-                response = bookingRepository.findBookingByItem_Owner_IdIsAndStartDateAfterOrderByStartDateDesc(
-                        userId, LocalDateTime.now(), page
-                );
-            } else {
-
-                response = bookingRepository.findBookingByItem_Owner_IdIsAndStartDateAfterOrderByStartDateDesc(
-                        userId, LocalDateTime.now()
-                );
-            }
-        }
-
-        if (response == null && Arrays.stream(Status.values()).anyMatch(status -> status.name().equals(state))) {
-
-            if (page!= null) {
-
-                response = bookingRepository.findBookingByItem_Owner_IdIsAndStatusIsOrderByStartDateDesc(
-                        userId, Status.valueOf(state), page
-                );
-            } else {
-
-                response = bookingRepository.findBookingByItem_Owner_IdIsAndStatusIsOrderByStartDateDesc(
-                        userId, Status.valueOf(state)
-                );
-            }
-        }
-
-        if (response == null) {
             throw new BadInputParametersException("Unknown state: UNSUPPORTED_STATUS");
         }
 
