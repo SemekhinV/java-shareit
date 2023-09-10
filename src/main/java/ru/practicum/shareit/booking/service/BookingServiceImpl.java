@@ -181,20 +181,20 @@ public class BookingServiceImpl implements BookingService {
         if (Status.PAST.name().equals(state)) {
 
             response = bookingRepository.findBookingByBookerIdIsAndEndDateBeforeOrderByStartDateDesc
-                        (userId, LocalDateTime.now());
+                    (userId, LocalDateTime.now());
         }
 
         if (Status.CURRENT.name().equals(state)) {
 
             response = bookingRepository
-                        .findBookingByBookerIdIsAndStartDateBeforeAndEndDateAfterOrderByStartDateDesc
-                                (userId, LocalDateTime.now(), LocalDateTime.now());
+                    .findBookingByBookerIdIsAndStartDateBeforeAndEndDateAfterOrderByStartDateDesc
+                            (userId, LocalDateTime.now(), LocalDateTime.now());
         }
 
         if (Status.FUTURE.name().equals(state)) {
 
             response = bookingRepository.findBookingByBookerIdIsAndStartDateAfterOrderByStartDateDesc
-                        (userId, LocalDateTime.now());
+                    (userId, LocalDateTime.now());
         }
 
         //Использовать метод .contains() не получилось, тк нет возможности нормально обработать ситуацию с
@@ -202,7 +202,7 @@ public class BookingServiceImpl implements BookingService {
         if (response == null && Arrays.stream(Status.values()).anyMatch(status -> status.name().equals(state))) {
 
             response = bookingRepository.findBookingByBookerIdIsAndStatusIsOrderByStartDateDesc(
-                        userId, Status.valueOf(state));
+                    userId, Status.valueOf(state));
         }
 
         if (response == null) {
@@ -281,7 +281,7 @@ public class BookingServiceImpl implements BookingService {
 
             switch (status) {
 
-                case ALL -> {
+                case ALL: {
 
                     return bookingRepository.findAllByItemOwnerIdIsOrderByStartDateDesc(userId)
                             .stream()
@@ -289,32 +289,40 @@ public class BookingServiceImpl implements BookingService {
                             .collect(Collectors.toList());
                 }
 
-                case PAST -> {
+                case PAST: {
 
                     response = bookingRepository.findBookingByItemOwnerIdIsAndEndDateBeforeOrderByStartDateDesc(
                             userId, LocalDateTime.now()
                     );
+
+                    break;
                 }
 
-                case CURRENT -> {
+                case CURRENT: {
 
                     response = bookingRepository.findBookingByItemOwnerIdIsAndStartDateBeforeAndEndDateAfterOrderByStartDateDesc(
                             userId, LocalDateTime.now(), LocalDateTime.now()
                     );
+
+                    break;
                 }
 
-                case FUTURE -> {
+                case FUTURE: {
 
                     response = bookingRepository.findBookingByItemOwnerIdIsAndStartDateAfterOrderByStartDateDesc(
                             userId, LocalDateTime.now()
                     );
+
+                    break;
                 }
 
-                default -> {
+                default: {
 
                     response = bookingRepository.findBookingByItemOwnerIdIsAndStatusIsOrderByStartDateDesc(
                             userId, Status.valueOf(state)
                     );
+
+                    break;
                 }
             }
 
@@ -346,40 +354,51 @@ public class BookingServiceImpl implements BookingService {
 
             switch (status) {
 
-                case ALL -> {
+                case ALL: {
+
                     return bookingRepository.findAllByItemOwnerIdIsOrderByStartDateDesc(userId, page)
                             .stream()
                             .map(BookingMapper::toAllFieldsDto)
                             .collect(Collectors.toList());
                 }
 
-                case PAST -> {
+                case PAST: {
+
                     response = bookingRepository.findBookingByItemOwnerIdIsAndEndDateBeforeOrderByStartDateDesc(
                             userId, LocalDateTime.now(), page
                     );
+
+                    break;
                 }
 
-                case CURRENT -> {
+                case CURRENT: {
+
                     response = bookingRepository.findBookingByItemOwnerIdIsAndStartDateBeforeAndEndDateAfterOrderByStartDateDesc(
                             userId, LocalDateTime.now(), LocalDateTime.now(), page
                     );
+
+                    break;
                 }
 
-                case FUTURE -> {
+                case FUTURE: {
                     response = bookingRepository.findBookingByItemOwnerIdIsAndStartDateAfterOrderByStartDateDesc(
                             userId, LocalDateTime.now(), page
                     );
+
+                    break;
                 }
 
-                default -> {
+                default: {
 
                     response = bookingRepository.findBookingByItemOwnerIdIsAndStatusIsOrderByStartDateDesc(
                             userId, status, page
                     );
+
+                    break;
                 }
             }
 
-       if (response == null) {
+            if (response == null) {
                 throw new BadInputParametersException("Unknown state: UNSUPPORTED_STATUS");
             }
         } catch (IllegalArgumentException e) {
