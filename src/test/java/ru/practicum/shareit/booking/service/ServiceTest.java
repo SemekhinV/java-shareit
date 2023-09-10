@@ -1,29 +1,28 @@
 package ru.practicum.shareit.booking.service;
 
+import lombok.RequiredArgsConstructor;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.practicum.shareit.booking.dto.BookingAllFieldsDto;
 import ru.practicum.shareit.booking.dto.BookingFromRequestDto;
+import ru.practicum.shareit.booking.model.Booking;
+import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemDtoWithBookingAndComment;
 import ru.practicum.shareit.item.service.ItemService;
-import ru.practicum.shareit.user.service.UserService;
-import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.user.dto.UserDto;
-import ru.practicum.shareit.item.dto.ItemDto;
-import org.junit.jupiter.api.BeforeEach;
-import lombok.RequiredArgsConstructor;
-import org.junit.jupiter.api.Test;
+import ru.practicum.shareit.user.service.UserService;
 
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
-
 import java.util.List;
 
-import static ru.practicum.shareit.booking.status.Status.*;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.equalTo;
 import static java.time.LocalDateTime.now;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.notNullValue;
+import static ru.practicum.shareit.booking.status.Status.APPROVED;
 
 @Transactional
 @SpringBootTest
@@ -85,7 +84,7 @@ public class ServiceTest {
                 .end(now().plusMinutes(40))
                 .itemId(1L)
                 .bookerId(1L)
-                .status(WAITING.name())
+                .status(APPROVED.name())
                 .build();
 
         bookingAllFieldsDto = bookingService.saveBooking(
@@ -142,8 +141,8 @@ public class ServiceTest {
                                 "JOIN booking.item item " +
                                 "WHERE item.owner.id = :ownerId AND item.id = :itemId",
                         Booking.class)
-                .setParameter("itemId", itemDto.getId())
                 .setParameter("ownerId", owner.getId())
+                .setParameter("itemId", itemDto.getId())
                 .getResultList();
 
         assertThat(bookingsFrom.get(0).getId(), equalTo(bookings.get(0).getId()));
@@ -156,8 +155,8 @@ public class ServiceTest {
         var bookings = bookingService.getAllUserItemsBookings(
                 owner.getId(),
                 null,
-                null,
-                null);
+                null
+        );
 
         var booking = entityManager.createQuery(
                         "SELECT booking FROM Booking booking " +
@@ -177,8 +176,8 @@ public class ServiceTest {
         List<BookingAllFieldsDto> bookings = bookingService.getAllUserItemsBookings(
                 owner.getId(),
                 APPROVED.name(),
-                null,
-                null);
+                null
+        );
 
         List<Booking> approvedBookings = entityManager.createQuery(
                         "SELECT booking FROM Booking booking " +
@@ -199,7 +198,6 @@ public class ServiceTest {
         List<BookingAllFieldsDto> approved = bookingService.getAllBookingsOfCurrentUser(
                 bookingAllFieldsDto.getBooker().getId(),
                 null,
-                null,
                 null);
 
         List<Booking> booking = entityManager.createQuery(
@@ -219,8 +217,8 @@ public class ServiceTest {
         var allBookings = bookingService.getAllBookingsOfCurrentUser(
                 bookingAllFieldsDto.getBooker().getId(),
                 APPROVED.name(),
-                null,
-                null);
+                null
+        );
 
         var approved = entityManager.createQuery(
                         "SELECT booking " +

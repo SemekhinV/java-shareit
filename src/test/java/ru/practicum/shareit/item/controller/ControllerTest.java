@@ -1,30 +1,29 @@
 package ru.practicum.shareit.item.controller;
 
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import ru.practicum.shareit.item.dto.ItemDtoWithBookingAndComment;
-import ru.practicum.shareit.request.service.ItemRequestService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import ru.practicum.shareit.item.service.ItemService;
-import org.springframework.test.web.servlet.MockMvc;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.web.servlet.MockMvc;
 import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
-import org.junit.jupiter.api.Test;
+import ru.practicum.shareit.item.dto.ItemDtoWithBookingAndComment;
+import ru.practicum.shareit.item.service.ItemService;
+import ru.practicum.shareit.request.service.ItemRequestService;
 
 import java.util.List;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.time.LocalDateTime.now;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.when;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.http.MediaType.*;
-import static java.nio.charset.StandardCharsets.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.*;
-import static org.hamcrest.Matchers.hasSize;
-import static java.time.LocalDateTime.*;
-import static org.hamcrest.Matchers.is;
-import static org.mockito.Mockito.when;
 
 @WebMvcTest(controllers = ItemController.class)
 
@@ -120,7 +119,7 @@ public class ControllerTest {
     @Test
     void getAllItemsTest() throws Exception {
 
-        when(itemService.getAllUsersItems(anyLong(), anyInt(), anyInt()))
+        when(itemService.getAllUsersItems(anyLong(), any()))
                 .thenReturn(List.of(itemAllFieldDto));
 
         mvc.perform(get("/items")
@@ -137,7 +136,7 @@ public class ControllerTest {
     @Test
     void searchTest() throws Exception {
 
-        when(itemService.searchForItems(anyLong(), anyString(), anyInt(), anyInt()))
+        when(itemService.searchForItems(anyLong(), anyString(), any()))
                 .thenReturn(List.of(itemDto));
 
         mvc.perform(get("/items/search")

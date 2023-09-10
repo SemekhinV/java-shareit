@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.practicum.shareit.booking.dto.BookingAllFieldsDto;
@@ -18,18 +17,17 @@ import ru.practicum.shareit.user.dto.UserDto;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.List.of;
+import static org.hamcrest.Matchers.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
-
+import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.http.MediaType.*;
-import static java.nio.charset.StandardCharsets.*;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.*;
-import static java.util.List.*;
 
 @WebMvcTest(controllers = BookingController.class)
 public class ControllerTest {
@@ -132,7 +130,7 @@ public class ControllerTest {
     @Test
     void getAllBookingsOfCurrentUserTest() throws Exception {
 
-        when(bookingService.getAllBookingsOfCurrentUser(anyLong(), anyString(), anyInt(), anyInt()))
+        when(bookingService.getAllBookingsOfCurrentUser(anyLong(), anyString(), any()))
                 .thenReturn(of(bookingAllFieldsDto));
 
         mvc.perform(get("/bookings")
@@ -154,7 +152,7 @@ public class ControllerTest {
     @Test
     void getAllUserItemsBookingTest() throws Exception {
 
-        when(bookingService.getAllUserItemsBookings(anyLong(), anyString(), anyInt(), anyInt()))
+        when(bookingService.getAllUserItemsBookings(anyLong(), anyString(),any()))
                 .thenReturn(List.of(bookingAllFieldsDto));
 
         mvc.perform(get("/bookings/owner")

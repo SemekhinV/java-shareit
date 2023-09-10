@@ -1,27 +1,28 @@
 package ru.practicum.shareit.request.controller;
 
 
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import ru.practicum.shareit.request.service.ItemRequestService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import ru.practicum.shareit.request.dto.ItemRequestDto;
-import org.springframework.test.web.servlet.MockMvc;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.web.servlet.MockMvc;
+import ru.practicum.shareit.request.dto.ItemRequestDto;
+import ru.practicum.shareit.request.service.ItemRequestService;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.hamcrest.Matchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.when;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.http.MediaType.*;
-import static java.nio.charset.StandardCharsets.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.when;
-import static org.hamcrest.Matchers.*;
 
 
 @WebMvcTest(controllers = ItemRequestController.class)
@@ -98,7 +99,7 @@ public class ControllerTest {
     @Test
     void getAllItemRequestsWithPageTest() throws Exception {
 
-        when(itemRequestService.getAllItemRequests(anyLong(), anyInt(), anyInt()))
+        when(itemRequestService.getAllItemRequests(anyLong(), any()))
                 .thenReturn(List.of(itemRequestDto));
 
         mvc.perform(get("/requests/all")

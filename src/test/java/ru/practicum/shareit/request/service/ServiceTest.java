@@ -1,24 +1,23 @@
 package ru.practicum.shareit.request.service;
 
+import lombok.RequiredArgsConstructor;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.practicum.shareit.request.dto.ItemRequestDto;
 import ru.practicum.shareit.request.model.ItemRequest;
-import ru.practicum.shareit.user.service.UserService;
 import ru.practicum.shareit.user.dto.UserDto;
-import org.junit.jupiter.api.BeforeEach;
-import lombok.RequiredArgsConstructor;
-import org.junit.jupiter.api.Test;
+import ru.practicum.shareit.user.service.UserService;
 
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
-
 import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.notNullValue;
 
 @Transactional
 @SpringBootTest
@@ -132,7 +131,10 @@ public class ServiceTest {
 
         addItemRequests();
 
-        List<ItemRequestDto> allItemRequests = itemRequestService.getAllItemRequests(user.getId(), null, null);
+        List<ItemRequestDto> allItemRequests = itemRequestService.getAllItemRequests(
+                user.getId(),
+                null
+        );
 
         List<ItemRequest> itemRequests = entityManager
                 .createQuery("SELECT itemRequest FROM ItemRequest itemRequest " +
