@@ -5,7 +5,6 @@ import lombok.NoArgsConstructor;
 import ru.practicum.shareit.booking.dto.BookingAllFieldsDto;
 import ru.practicum.shareit.booking.dto.BookingFromRequestDto;
 import ru.practicum.shareit.booking.model.Booking;
-
 import ru.practicum.shareit.item.mapper.ItemMapper;
 import ru.practicum.shareit.user.mapper.UserMapper;
 

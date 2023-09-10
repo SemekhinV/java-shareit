@@ -1,32 +1,27 @@
 package ru.practicum.shareit.item.service;
 
-import ru.practicum.shareit.booking.dto.BookingFromRequestDto;
-import ru.practicum.shareit.item.dto.ItemDtoWithBookingAndComment;
-import ru.practicum.shareit.item.mapper.ItemMapper;
-import ru.practicum.shareit.request.service.ItemRequestService;
+import lombok.RequiredArgsConstructor;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import ru.practicum.shareit.booking.service.BookingService;
-import ru.practicum.shareit.request.dto.ItemRequestDto;
-import ru.practicum.shareit.user.service.UserService;
-import ru.practicum.shareit.item.dto.CommentDto;
-import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.dto.ItemDto;
-import ru.practicum.shareit.user.dto.UserDto;
+import ru.practicum.shareit.item.dto.ItemDtoWithBookingAndComment;
 import ru.practicum.shareit.item.model.Item;
-import org.junit.jupiter.api.BeforeEach;
-import lombok.RequiredArgsConstructor;
-import org.junit.jupiter.api.Test;
+import ru.practicum.shareit.request.dto.ItemRequestDto;
+import ru.practicum.shareit.request.service.ItemRequestService;
+import ru.practicum.shareit.user.dto.UserDto;
+import ru.practicum.shareit.user.service.UserService;
 
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
-
 import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static java.time.LocalDateTime.*;
 import static org.hamcrest.Matchers.*;
 
 @Transactional
@@ -169,7 +164,10 @@ public class ServiceTest {
                 null
         );
 
-        List<ItemDto> allItems = itemService.getAllUsersItems(itemDto.getUserId(), 0, 2);
+        List<ItemDto> allItems = itemService.getAllUsersItems(
+                itemDto.getUserId(),
+                PageRequest.of(0, 20, Sort.by("id").ascending())
+        );
 
         List<Item> items = entityManager.createQuery(
                         "SELECT item FROM Item item " +
@@ -198,7 +196,11 @@ public class ServiceTest {
                 null
         );
 
-        List<ItemDto> itemDtoList = itemService.searchForItems(itemDto.getUserId(), "desc", 0, 2);
+        List<ItemDto> itemDtoList = itemService.searchForItems(
+                itemDto.getUserId(),
+                "desc",
+                PageRequest.of(0, 20, Sort.by("id").ascending())
+        );
 
         List<Item> items = entityManager.createQuery(
                         "SELECT item FROM Item item " +
