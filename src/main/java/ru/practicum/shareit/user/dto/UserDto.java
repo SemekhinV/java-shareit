@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.experimental.FieldDefaults;
 
+import javax.validation.constraints.NotNull;
+
 
 @Data
 @AllArgsConstructor
@@ -14,6 +16,8 @@ import lombok.experimental.FieldDefaults;
 public class UserDto {
 
     Long id;
+
     String name;
+
     String email;
 }

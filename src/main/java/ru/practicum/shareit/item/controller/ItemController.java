@@ -2,6 +2,7 @@ package ru.practicum.shareit.item.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
@@ -11,9 +12,11 @@ import ru.practicum.shareit.request.dto.ItemRequestDto;
 import ru.practicum.shareit.request.service.ItemRequestService;
 import ru.practicum.shareit.tools.PageableImpl;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import java.util.List;
 
+@Validated
 @RestController
 @RequestMapping("/items")
 @RequiredArgsConstructor
@@ -25,12 +28,14 @@ public class ItemController {
 
     private static final String USER_ID = "X-Sharer-User-Id";
 
-    private static final String USER_ERROR_MESSAGE = "Переадно пустое значение id пользователя";
+    private static final String ITEM_ID_ERROR = "Передано пустое значение id вещи";
+
+    private static final String USER_ID_ERROR = "Передано пустое значение id пользователя";
 
     @PostMapping()
     public ItemDto addItem(
             @RequestBody ItemDto item,
-            @RequestHeader(value = USER_ID, required = false) @NotNull(message = USER_ERROR_MESSAGE) Long userId
+            @RequestHeader(value = USER_ID, required = false) @NotNull(message = USER_ID_ERROR) Long userId
     ) {
 
         ItemRequestDto itemRequest = (item.getRequestId() != null) ?
@@ -41,9 +46,9 @@ public class ItemController {
 
     @PatchMapping("/{itemId}")
     public ItemDto updateItem(
-            @PathVariable Long itemId,
-            @RequestBody  ItemDto item,
-            @RequestHeader(value = USER_ID, required = false) @NotNull(message = USER_ERROR_MESSAGE) Long userId
+            @PathVariable @NotNull(message = ITEM_ID_ERROR) Long itemId,
+            @RequestBody ItemDto item,
+            @RequestHeader(value = USER_ID, required = false) @NotNull(message = USER_ID_ERROR) Long userId
     ) {
 
         item.setId(itemId);
@@ -52,8 +57,8 @@ public class ItemController {
 
     @GetMapping("/{itemId}")
     public ItemDtoWithBookingAndComment getItem(
-            @PathVariable @NotNull(message = "id вещи не может быть пустым.") Long itemId,
-            @RequestHeader(value = USER_ID, required = false) @NotNull(message = USER_ERROR_MESSAGE) Long userId
+            @PathVariable @NotNull(message = ITEM_ID_ERROR) Long itemId,
+            @RequestHeader(value = USER_ID, required = false) @NotNull(message = USER_ID_ERROR) Long userId
     ) {
 
         return itemService.getItem(itemId, userId);
@@ -61,7 +66,7 @@ public class ItemController {
 
     @GetMapping()
     public List<ItemDto> getAllUsersItems(
-            @RequestHeader(value = USER_ID, required = false) @NotNull(message = USER_ERROR_MESSAGE) Long userId,
+            @RequestHeader(value = USER_ID, required = false) @NotNull(message = USER_ID_ERROR) Long userId,
             @RequestParam(required = false) Integer from,
             @RequestParam(required = false) Integer size
     ) {
@@ -71,7 +76,7 @@ public class ItemController {
 
     @GetMapping("/search")
     public List<ItemDto> searchForItems(
-            @RequestHeader(value = USER_ID, required = false) @NotNull(message = USER_ERROR_MESSAGE) Long userId,
+            @RequestHeader(value = USER_ID, required = false) @NotNull(message = USER_ID_ERROR) Long userId,
             @RequestParam String text,
             @RequestParam(required = false) Integer from,
             @RequestParam(required = false) Integer size
@@ -84,9 +89,9 @@ public class ItemController {
 
     @PostMapping("{itemId}/comment")
     public CommentDto addComment(
-            @RequestHeader(value = USER_ID, required = false) @NotNull(message = USER_ERROR_MESSAGE) Long userId,
+            @RequestHeader(value = USER_ID, required = false) @NotNull(message = USER_ID_ERROR) Long userId,
             @PathVariable @NotNull(message = "id вещи не может быть пустым.") Long itemId,
-            @RequestBody CommentDto commentDto
+            @RequestBody @Valid CommentDto commentDto
     ) {
 
         return itemService.addComment(commentDto, itemId, userId);

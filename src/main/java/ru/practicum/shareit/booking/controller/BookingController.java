@@ -2,6 +2,7 @@ package ru.practicum.shareit.booking.controller;
 
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Sort;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.booking.dto.BookingAllFieldsDto;
 import ru.practicum.shareit.booking.dto.BookingFromRequestDto;
@@ -10,6 +11,7 @@ import ru.practicum.shareit.item.dto.ItemDtoWithBookingAndComment;
 import ru.practicum.shareit.item.service.ItemService;
 import ru.practicum.shareit.tools.PageableImpl;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import java.util.List;
 
@@ -40,7 +42,7 @@ public class BookingController {
     @GetMapping("/{bookingId}")
     public BookingAllFieldsDto getBooking(
             @RequestHeader(value = USER_ID, required = false) @NotNull(message = USER_ERROR_MESSAGE) Long userId,
-            @PathVariable Long bookingId
+            @PathVariable @NotNull(message = "Переадно пустое значение id бронирования.") Long bookingId
     ) {
 
         return bookingService.getBooking(bookingId, userId);

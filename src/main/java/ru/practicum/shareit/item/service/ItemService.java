@@ -22,7 +22,6 @@ public interface ItemService {
 
     void deleteItem(Long itemId);
 
-    @Transactional
     List<ItemDto> searchForItems(Long userId, String text, Pageable pageable);
 
     CommentDto addComment(CommentDto commentDto, Long itemId, Long userId);
@@ -33,6 +32,5 @@ public interface ItemService {
 
     List<ItemDto> getItemsByRequestId(Long requestId);
 
-    @Transactional
     List<ItemDto> findItemsByRequestsList(List<ItemRequest> requests);
 }

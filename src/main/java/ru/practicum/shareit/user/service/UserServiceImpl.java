@@ -51,11 +51,6 @@ public class UserServiceImpl implements  UserService{
             return toUserDto(userRepository.save(toUser(user)));
         } catch (DataIntegrityViolationException e) {
 
-            //Т.к. при создании поля email в таблице мы указали уникальность этого поля, будет выброшено
-            //Низкоуровневое исключение ConstraintViolationException, которое повлечет за собой вызов
-            //Другого исключения, а именно DataIntegrityViolationException
-            //Ранее данное исключение отлавливалось в контроллере исключений, но теперь необходимо индивидуальное
-            //Сообщение
             if (e.getCause() instanceof ConstraintViolationException) {
 
                 throw new EmailException("Пользователь с почтой " + user.getEmail() + " уже существует.");

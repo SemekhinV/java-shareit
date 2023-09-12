@@ -33,27 +33,19 @@ public class ItemRequestServiceImpl implements ItemRequestService {
 
     private final UserService userService;
 
-    private void isValid(ItemRequestDto itemRequestDto, Long id) {
-
-        if (id == null) {
-            throw new BadInputParametersException("Передано пустое значение.");
-        }
+    @Override
+    public ItemRequestDto addItemRequest(ItemRequestDto itemRequestDto, Long userId) {
 
         if (itemRequestDto.getDescription() == null || itemRequestDto.getDescription().isBlank()) {
             throw new InvalidValueException("Описание запроса не может быть пустым.");
         }
-    }
-
-    @Override
-    public ItemRequestDto addItemRequest(ItemRequestDto itemRequestDto, Long userId) {
-
-        isValid(itemRequestDto, userId);
 
         User user = UserMapper.toUser(userService.getUser(userId));
 
         ItemRequest request = ItemRequestMapper.toRequest(itemRequestDto);
 
         request.setRequester(user);
+
         request.setCreated(LocalDateTime.now());
 
         ItemRequest response = requestRepository.save(request);
@@ -63,10 +55,6 @@ public class ItemRequestServiceImpl implements ItemRequestService {
 
     @Override
     public ItemRequestDto getItemRequestById(Long userId, Long requestId) {
-
-        if (userId == null || requestId == null) {
-            throw new BadInputParametersException("Передано пустое значение.");
-        }
 
         userService.getUser(userId);
 
@@ -81,10 +69,6 @@ public class ItemRequestServiceImpl implements ItemRequestService {
 
     @Override
     public List<ItemRequestDto> getAllItemRequests(Long userId) {
-
-        if (userId == null) {
-            throw new BadInputParametersException("передано пустое значение.");
-        }
 
         userService.getUser(userId);
 
@@ -102,10 +86,6 @@ public class ItemRequestServiceImpl implements ItemRequestService {
 
     @Override
     public List<ItemRequestDto> getAllItemRequests(Long userId, Pageable page) {
-
-        if (userId == null) {
-            throw new BadInputParametersException("передано пустое значение.");
-        }
 
         userService.getUser(userId);
 

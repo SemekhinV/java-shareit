@@ -57,17 +57,11 @@ public class ItemServiceImpl implements ItemService{
         if ("".equals(item.getName()) || "".equals(item.getDescription())) {
             throw new InvalidValueException("Ошибка создания новой вещи, заполнены не все поля.");
         }
-
-        if (userId == null) {
-            throw new BadInputParametersException("Id пользователя не указан.");
-        }
     }
 
     @Override
     @Transactional
     public ItemDtoWithBookingAndComment getItem(Long itemId, Long userId) {
-
-        if (itemId == null ) {throw new BadInputParametersException("Указан неверный id вещи.");}
 
         Item item = itemRepository.findById(itemId).orElseThrow(
                 () -> {throw new EntityNotFoundException("Вещь с указанным id не найдена.");}
@@ -136,8 +130,6 @@ public class ItemServiceImpl implements ItemService{
     @Override
     @Transactional
     public void deleteItem(Long itemId) {
-
-        if (itemId == null) {throw new BadInputParametersException("Передано пустое значение.");}
 
         Item item = itemRepository.findById(itemId).orElseThrow(
                 () -> {throw new EntityNotFoundException("Вещь с id = " + itemId + " не найдена.");}
@@ -230,7 +222,6 @@ public class ItemServiceImpl implements ItemService{
                 PageRequest.of(1, 1, Sort.by("startDate").descending())
         );
 
-        //Проверка на взятие именно этой вещи в аренду пользователем
         if (bookings.isEmpty() ||
                 bookings
                 .stream()
@@ -274,10 +265,6 @@ public class ItemServiceImpl implements ItemService{
     @Override
     @Transactional
     public List<ItemDto> getItemsByRequestId(Long requestId) {
-
-        if (requestId == null ) {
-            throw new BadInputParametersException("Передано пустое значение.");
-        }
 
         return itemRepository
                 .findAllByRequestIdIs(requestId)

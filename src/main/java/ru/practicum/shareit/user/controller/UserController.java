@@ -1,10 +1,12 @@
 package ru.practicum.shareit.user.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.service.UserService;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import java.util.List;
 
@@ -24,7 +26,7 @@ public class UserController {
     }
 
     @PatchMapping("/{userId}")
-    public UserDto patchItem(
+    public UserDto patchUser(
             @PathVariable @NotNull(message = USER_ERROR_MESSAGE) Long userId,
             @RequestBody UserDto user
     ) {

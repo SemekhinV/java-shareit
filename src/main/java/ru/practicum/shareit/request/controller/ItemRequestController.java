@@ -2,11 +2,13 @@ package ru.practicum.shareit.request.controller;
 
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Sort;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.request.dto.ItemRequestDto;
 import ru.practicum.shareit.request.service.ItemRequestService;
 import ru.practicum.shareit.tools.PageableImpl;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import java.util.List;
 
@@ -24,7 +26,7 @@ public class ItemRequestController {
     @GetMapping("/{requestId}")
     public ItemRequestDto getRequest(
             @RequestHeader(value = USER_ID, required = false) @NotNull(message = ERROR_MESSAGE) Long userId,
-            @PathVariable Long requestId
+            @PathVariable @NotNull(message = "Передано пустое значение id запроса.") Long requestId
     ) {
 
         return requestService.getItemRequestById(userId, requestId);
