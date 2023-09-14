@@ -4,8 +4,8 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.experimental.FieldDefaults;
-import ru.practicum.shareit.exceptions.validations.OnCreate;
-import ru.practicum.shareit.exceptions.validations.OnUpdate;
+import ru.practicum.shareit.error.validations.OnCreate;
+import ru.practicum.shareit.error.validations.OnUpdate;
 
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;

@@ -4,8 +4,8 @@ import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.shareit.exceptions.validations.OnCreate;
-import ru.practicum.shareit.exceptions.validations.OnUpdate;
+import ru.practicum.shareit.error.validations.OnCreate;
+import ru.practicum.shareit.error.validations.OnUpdate;
 import ru.practicum.shareit.user.client.UserClient;
 import ru.practicum.shareit.user.dto.UserDto;
 
