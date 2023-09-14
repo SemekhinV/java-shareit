@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.experimental.FieldDefaults;
 
+import javax.validation.constraints.NotNull;
+
 
 @Data
 @AllArgsConstructor
