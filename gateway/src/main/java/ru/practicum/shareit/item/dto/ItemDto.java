@@ -1,6 +1,8 @@
 package ru.practicum.shareit.item.dto;
 
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.experimental.FieldDefaults;
 import ru.practicum.shareit.exceptions.validations.OnCreate;
 

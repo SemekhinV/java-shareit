@@ -1,7 +1,6 @@
 package ru.practicum.shareit.item.service;
 
 import org.springframework.data.domain.Pageable;
-import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemDtoWithBookingAndComment;
