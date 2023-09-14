@@ -4,6 +4,8 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.springframework.validation.annotation.Validated;
 
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
 @Data
@@ -15,18 +17,14 @@ import java.time.LocalDateTime;
 public class BookingFromRequestDto {
 
     Long id;
-    @NonNull
+
     LocalDateTime start;
 
-    @NonNull
     LocalDateTime end;
 
-    @NonNull
     Long itemId;
 
-    @NonNull
     Long bookerId;
 
-    @NonNull
     String status;
 }

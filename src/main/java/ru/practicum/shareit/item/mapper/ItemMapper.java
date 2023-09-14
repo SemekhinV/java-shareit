@@ -14,6 +14,25 @@ import java.util.List;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class ItemMapper {
 
+    public static Item toItem(ItemDtoWithBookingAndComment item) {
+        return Item.builder()
+                .id(item.getId())
+                .name(item.getName())
+                .description(item.getDescription())
+                .available(item.getAvailable())
+                .build();
+    }
+
+    public static Item toItem(ItemDto item) {
+
+        return Item.builder()
+                .id(item.getId())
+                .name(item.getName())
+                .description(item.getDescription())
+                .available(item.getAvailable())
+                .build();
+    }
+
     public static ItemDto toItemDto(Item item) {
 
         return ItemDto.builder()
@@ -21,6 +40,8 @@ public class ItemMapper {
                 .description(item.getDescription())
                 .name(item.getName())
                 .available(item.getAvailable())
+                .userId(item.getOwner().getId())
+                .requestId(item.getRequest() != null ? item.getRequest().getId() : null)
                 .build();
     }
 
@@ -40,25 +61,5 @@ public class ItemMapper {
                 comments != null ? comments : List.of()
         );
     }
-
-    public static Item toItem(ItemDto item) {
-
-        return Item.builder()
-                .id(item.getId())
-                .name(item.getName())
-                .description(item.getDescription())
-                .available(item.getAvailable())
-                .build();
-    }
-
-    public static Item toItem(ItemDtoWithBookingAndComment item) {
-        return Item.builder()
-                .id(item.getId())
-                .name(item.getName())
-                .description(item.getDescription())
-                .available(item.getAvailable())
-                .build();
-    }
-
 }
 

@@ -1,7 +1,12 @@
 package ru.practicum.shareit.user.dto;
 
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
 import lombok.experimental.FieldDefaults;
+
+import javax.validation.constraints.NotNull;
 
 
 @Data
@@ -11,6 +16,8 @@ import lombok.experimental.FieldDefaults;
 public class UserDto {
 
     Long id;
+
     String name;
+
     String email;
 }
