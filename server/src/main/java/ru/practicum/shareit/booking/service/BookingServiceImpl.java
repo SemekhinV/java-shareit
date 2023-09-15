@@ -111,8 +111,9 @@ public class BookingServiceImpl implements BookingService {
         userService.getUser(userId);
 
         Booking booking = bookingRepository.findById(bookingId).orElseThrow(
-                () -> {throw new EntityNotFoundException("Аренда с id = " + bookingId + " не найдена.");}
-        );
+                () -> {
+                    throw new EntityNotFoundException("Аренда с id = " + bookingId + " не найдена.");
+                });
 
         if (!booking.getBooker().getId().equals(userId) && !booking.getItem().getOwner().getId().equals(userId)) {
             throw new EntityNotFoundException("У пользователя с id = " + userId + " нет прав для просмотра.");
@@ -129,8 +130,9 @@ public class BookingServiceImpl implements BookingService {
         userService.getUser(userId);
 
         Booking booking = bookingRepository.findById(bookingId).orElseThrow(
-                () -> {throw new EntityNotFoundException("Аренда с id = " + bookingId + " не найдена.");}
-        );
+                () -> {
+                    throw new EntityNotFoundException("Аренда с id = " + bookingId + " не найдена.");
+                });
 
         if (booking.getBooker().getId().equals(userId))
             throw new EntityNotFoundException("Подтверждение возможно только хозяином вещи.");
@@ -186,8 +188,8 @@ public class BookingServiceImpl implements BookingService {
 
             case PAST: {
 
-                response = bookingRepository.findBookingByBookerIdIsAndEndDateBeforeOrderByStartDateDesc
-                        (userId, LocalDateTime.now());
+                response = bookingRepository.findBookingByBookerIdIsAndEndDateBeforeOrderByStartDateDesc(
+                        userId, LocalDateTime.now());
 
                 break;
             }
@@ -195,16 +197,16 @@ public class BookingServiceImpl implements BookingService {
             case CURRENT: {
 
                 response = bookingRepository
-                        .findBookingByBookerIdIsAndStartDateBeforeAndEndDateAfterOrderByStartDateDesc
-                                (userId, LocalDateTime.now(), LocalDateTime.now());
+                        .findBookingByBookerIdIsAndStartDateBeforeAndEndDateAfterOrderByStartDateDesc(
+                                userId, LocalDateTime.now(), LocalDateTime.now());
 
                 break;
             }
 
             case FUTURE: {
 
-                response = bookingRepository.findBookingByBookerIdIsAndStartDateAfterOrderByStartDateDesc
-                        (userId, LocalDateTime.now());
+                response = bookingRepository.findBookingByBookerIdIsAndStartDateAfterOrderByStartDateDesc(
+                        userId, LocalDateTime.now());
 
                 break;
             }
@@ -254,25 +256,24 @@ public class BookingServiceImpl implements BookingService {
 
             case PAST: {
 
-                response = bookingRepository.findBookingByBookerIdIsAndEndDateBeforeOrderByStartDateDesc
-                        (userId, LocalDateTime.now(), page);
+                response = bookingRepository.findBookingByBookerIdIsAndEndDateBeforeOrderByStartDateDesc(
+                        userId, LocalDateTime.now(), page);
 
                 break;
             }
 
             case CURRENT: {
 
-                response = bookingRepository
-                        .findBookingByBookerIdIsAndStartDateBeforeAndEndDateAfter
-                                (userId, LocalDateTime.now(), LocalDateTime.now(), page);
+                response = bookingRepository.findBookingByBookerIdIsAndStartDateBeforeAndEndDateAfter(
+                                userId, LocalDateTime.now(), LocalDateTime.now(), page);
 
                 break;
             }
 
             case FUTURE: {
 
-                response = bookingRepository.findBookingByBookerIdIsAndStartDateAfterOrderByStartDateDesc
-                        (userId, LocalDateTime.now(), page);
+                response = bookingRepository.findBookingByBookerIdIsAndStartDateAfterOrderByStartDateDesc(
+                        userId, LocalDateTime.now(), page);
 
                 break;
             }
@@ -288,6 +289,7 @@ public class BookingServiceImpl implements BookingService {
         }
 
         if (response == null) {
+
             throw new BadInputParametersException("Unknown state: UNSUPPORTED_STATUS");
         }
 

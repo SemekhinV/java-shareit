@@ -11,10 +11,12 @@ import java.util.List;
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class ItemDtoWithBookingAndComment extends ItemDto{
+public class ItemDtoWithBookingAndComment extends ItemDto {
 
     BookingDto lastBooking;
+
     BookingDto nextBooking;
+
     List<CommentDto> comments;
 
     public ItemDtoWithBookingAndComment(Long id,

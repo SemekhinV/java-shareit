@@ -77,7 +77,7 @@ public class BookingController {
             @RequestParam(required = false) Integer size
     ) {
 
-        return bookingService.getAllUserItemsBookings (
+        return bookingService.getAllUserItemsBookings(
                 userId, state, PageableImpl.of(from, size, Sort.by("startDate").descending())
         );
     }

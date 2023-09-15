@@ -11,7 +11,9 @@ import javax.persistence.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "Items")
-@Getter @Setter @ToString
+@Getter
+@Setter
+@ToString
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class Item {

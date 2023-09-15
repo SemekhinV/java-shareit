@@ -11,7 +11,9 @@ import java.time.LocalDateTime;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Setter @Getter @ToString
+@Setter
+@Getter
+@ToString
 @Table(name = "Requests")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ItemRequest {

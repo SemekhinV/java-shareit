@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
 @Service
 @AllArgsConstructor
 @Transactional(readOnly = true)
-public class ItemServiceImpl implements ItemService{
+public class ItemServiceImpl implements ItemService {
 
     private final UserService userService;
 
@@ -64,8 +64,9 @@ public class ItemServiceImpl implements ItemService{
     public ItemDtoWithBookingAndComment getItem(Long itemId, Long userId) {
 
         Item item = itemRepository.findById(itemId).orElseThrow(
-                () -> {throw new EntityNotFoundException("Вещь с указанным id не найдена.");}
-        );
+                () -> {
+                    throw new EntityNotFoundException("Вещь с указанным id не найдена.");
+                });
 
         List<CommentDto> comments = getAllItemComments(itemId);
 
@@ -107,18 +108,26 @@ public class ItemServiceImpl implements ItemService{
     public ItemDto updateItem(ItemDto itemDto, Long userId) {
 
         Item item = itemRepository.findById(itemDto.getId()).orElseThrow(
-                () -> {throw new EntityNotFoundException("Вещь с указанным id не найдена.");}
-        );
+                () -> {
+                    throw new EntityNotFoundException("Вещь с указанным id не найдена.");
+                });
 
         if (!item.getOwner().getId().equals(userId)) {
             throw new BadInputParametersException("Указанный пользователь не является хозяином.");
         }
 
         if (itemDto.getName() != null) {
+
             item.setName(itemDto.getName());
-        } if (itemDto.getDescription() != null) {
+        }
+
+        if (itemDto.getDescription() != null) {
+
             item.setDescription(itemDto.getDescription());
-        } if (itemDto.getAvailable() != null) {
+        }
+
+        if (itemDto.getAvailable() != null) {
+
             item.setAvailable(itemDto.getAvailable());
         }
 
@@ -132,8 +141,9 @@ public class ItemServiceImpl implements ItemService{
     public void deleteItem(Long itemId) {
 
         Item item = itemRepository.findById(itemId).orElseThrow(
-                () -> {throw new EntityNotFoundException("Вещь с id = " + itemId + " не найдена.");}
-        );
+                () -> {
+                    throw new EntityNotFoundException("Вещь с id = " + itemId + " не найдена.");
+                });
 
         itemRepository.delete(item);
     }
@@ -185,6 +195,7 @@ public class ItemServiceImpl implements ItemService{
     public List<ItemDto> searchForItems(Long userId, String text, Pageable page) {
 
         if (text.isBlank()) {
+
             return List.of();
         }
 
@@ -192,13 +203,9 @@ public class ItemServiceImpl implements ItemService{
 
         List<Item> items;
 
-        items = itemRepository.searchForItems(
-                text,
-                page
-        );
+        items = itemRepository.searchForItems(text, page);
 
-        return items
-                .stream()
+        return items.stream()
                 .map(ItemMapper::toItemDto)
                 .collect(Collectors.toList());
     }
@@ -208,25 +215,24 @@ public class ItemServiceImpl implements ItemService{
     public CommentDto addComment(CommentDto commentDto, Long itemId, Long userId) {
 
         if (commentDto.getText() == null || commentDto.getText().isBlank()) {
+
             throw new InvalidValueException("Комментарий не может быть пустым.");
         }
 
         User user = UserMapper.toUser(userService.getUser(userId));
 
         Item item = itemRepository.findById(itemId).orElseThrow(
-                () -> {throw new EntityNotFoundException("Вещь с id = " + itemId + " не найдена.");}
-        );
+                () -> {
+                    throw new EntityNotFoundException("Вещь с id = " + itemId + " не найдена.");
+                });
 
         List<BookingAllFieldsDto> bookings = bookingService.getAllBookingsOfCurrentUser(
                 userId, "PAST",
                 PageRequest.of(1, 1, Sort.by("startDate").descending())
         );
 
-        if (bookings.isEmpty() ||
-                bookings
-                .stream()
-                .noneMatch(booking -> booking.getItem().getId().equals(itemId))
-        ) {
+        if (bookings.isEmpty() || bookings.stream().noneMatch(booking -> booking.getItem().getId().equals(itemId))) {
+
             throw new InvalidValueException("Нельзя оставить отзыв не арендовав вещь.");
         }
 

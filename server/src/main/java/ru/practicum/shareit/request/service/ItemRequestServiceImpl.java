@@ -60,8 +60,9 @@ public class ItemRequestServiceImpl implements ItemRequestService {
         List<ItemDto> items = itemService.getItemsByRequestId(requestId);
 
         ItemRequest response = requestRepository.findById(requestId).orElseThrow(
-                () -> {throw new EntityNotFoundException("Запрос с id = " + requestId + " не найден.");}
-        );
+                () -> {
+                    throw new EntityNotFoundException("Запрос с id = " + requestId + " не найден.");
+                });
 
         return ItemRequestMapper.toItemRequestDto(response, items);
     }
